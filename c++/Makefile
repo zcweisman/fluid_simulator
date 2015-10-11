@@ -7,7 +7,7 @@ all:
 	g++...
 
 ubuntu:
-	g++...
+	g++ $(CC) $(CFLAGS) *.cpp *.hpp $(LIB)
 
 windows:
 	echo "Not yet configured for Windows"
