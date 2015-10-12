@@ -5,9 +5,17 @@
 #include "GLSL.hpp"
 #include "simulator.hpp"
 
+GLuint program;
+
+static void key_callback(GLFWwindow*, int, int, int, int);
+static void error_callback(int, const char*);
+static void cursor_position_callback(GLFWwindow*, double, double);
+
 void main() {
     const GLubyte* renderer;
     const GLubyte* version;
+    string fShader = "frag.glsl";
+    string vShader = "vert.glsl";
 
     srand(time(NULL));
 
@@ -33,3 +41,5 @@ void main() {
 
     return 0;
 }
+
+static void key_callback(GLFWwindow* window)

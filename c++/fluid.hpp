@@ -11,27 +11,27 @@ private:
     float diffusion, viscosity, dt;
     short fieldDimension, fieldArraySize, windowWidth, windowHeight;
     char iterations;
-    void updateVelocity();
-    void updateDensity();
-    void diffuse(int, float*, float*);
-    void advect(int, float*, float*, float*, float*);
-    void project();
-    void setBnd(int, float*);
-    void linSolve();
-    void addSource(float*, float*);
+
+    void updateVelocity(float*, float*, float*, float*); //Done
+    void updateDensity(float*, float*, float*, float*); //Done
+    void diffuse(int, float*, float*); //Done
+    void advect(int, float*, float*, float*, float*); //Done
+    void project(float*, float*, float*);
+    void setBnd(int, float*); //Done
+    void addSource(float*, float*); //Done
 
 public:
-    Fluid( short, short );
-    ~Fluid();
+    Fluid( short, short );  //Constructor
+    ~Fluid();               //Destructor
     void    update();
-    void    setViscosity(float);
-    void    setDiffuse(float);
-    void    setTimeStep(float);
-    float*  getDensity();
-    float*  getXVelocity();
-    float*  getYVelocity();
-    void    addDensity(float, int, int);
-    void    addVelocity(float, int, int);
+    void    setViscosity(float); //Done
+    void    setDiffuse(float);  //Done
+    void    setTimeStep(float); //Done
+    float*  getDensity(); //Done
+    float*  getXVelocity(); //Done
+    float*  getYVelocity(); //Done
+    void    addDensity(float, int, int); //Done
+    void    addVelocity(float, float, int, int); //Done
 };
 
 Fluid::Fluid(short field, short window) {
@@ -57,26 +57,105 @@ Fluid::~Fluid() {
 }
 
 void Fluid::update() {
-    updateDensity();
-    updateVelocity();
+    updateParams();
+    updateVelocity(vx, vy, vx0, vy0);
+    updateDensity(dens, densPrev, vx, vy);
 }
 
-void Fluid::updateDensity() {
-
+void Fluid::updateDensity(float* x, float* x0, float* u, float* v) {
+    addSource(x, x0);
+    SWAP(x0, x);
+    diffuse(0, x, x0);
+    SWAP(x0, x);
+    advect(0, x, x0);
 }
 
-void Fluid::updateVelocity() {
-
+void Fluid::updateVelocity(float* u, float* v, float* u0, float* v0) {
+    addSource(u, u0);
+    addSource(v, v0);
+    SWAP(u0, u);
+    diffuse(1, u, u0);
+    SWAP(v0, v);
+    diffuse(2, v, v0);
+    project(u, v, u0, v0);
+    SWAP(u0, u);
+    SWAP(v0, v);
+    advect(1, u, u0, u0, v0);
+    advect(2, v, v0, u0, v0);
+    project(u, v, u0, v0);
 }
 
 void Field::diffuse(int b, float* x, float* x0) {
     unsigned int i, j, k;
     float a = dt*diffusion*fieldDimension*fieldDimension;
     for ( k = 0; k < iterations; k++ ) {
-        for ( i = 1; i < fieldDimension; i++ ) {
+        for ( j = 1; j <= fieldDimension; j++ ) {
+            for ( i = 1; i <= fieldDimension; i++ )
+                x[IX2D(i,j)] = (x0[IX2D(i,j)] + a * (
+                    x[IX2D(i-1,j)] +
+                    x[IX2D(i+1,j)] +
+                    x[IX2D(i,j-1)] +
+                    x[IX2D(i,j+1)])
+                )/(1+4*a);
+        }
+        setBnd(b,x);
+    }
+}
 
+void Field::advect(int b, float* d, float* d0, float* u, float* v) {
+    int i, j, i0, j0, i1, j1;
+    float x, y, s0, t0, s1, t1, dt0;
+
+    dt0 = dt*fieldDimension;
+    for ( i = 1; i <= fieldDimension; i++) {
+        for ( j = 1; j <= fieldDimension; j++ ) {
+            x = i-dt0*u[IX2D(i,j)];
+            y = j-dt0*v[IX2D(i,j)];
+
+            if ( x < 0.5 ) x = 0.5; // Set x's floor to 0.5
+            if ( x > fieldDimension+0.5 ) x = fieldDimension+0.5; //Limit x to N+0.5
+            i0 = (int)x;
+            i1 = i0+1;
+
+            if ( y < 0.5 ) y = 0.5; // Set y's floor to 0.5
+            if ( y > fieldDimension+0.5 ) y = fieldDimension+0.5; // Limit y to N+0.5
+            j0 = (int)y;
+            j1 = j0+1;
+
+            s1 = x-i0;
+            s0 = 1-s1;
+            t1 = y-j0;
+            t0 = 1-t1;
+
+            d[IX2D(i,j)] = s0*(t0*d0[IX2D(i0,j0)] +
+                            t1*d0[IX2D(i0,j1)]) +
+                            s1*(t0*d0[IX2D(i1,j0)] +
+                            t1*d0[IX2D(i1,j1)]);
         }
     }
+
+    setBnd(b,d);
+}
+
+void Fluid::setBnd(int b, float* d) {
+    int i;
+
+    for ( i = 1; i <= fieldDimension; i++ ) {
+        x[IX2D(0, i)] = b == 1 ? -x[IX2D(1, i)] : x[IX2D(1, i)];
+        x[IX2D(fieldDimension+1, i)] = b ==1 ? -x[IX2D(fieldDimension, i)] :
+            x[IX2D(fieldDimension, i)];
+        x[IX2D(i, 0)] = b == 2 ? -x[IX2D(i, 1)] : x[IX2D(i, 1)];
+        x[IX2D(i, fieldDimension+1)] = b == 2 ? -x[IX2D(i, fieldDimension)] :
+            x[IX2D(i, fieldDimension)];
+    }
+
+    x[IX2D(0, 0)] = 0.5*(x[IX2D(1, 0)] + x[IX2D(0, 1)]);
+    x[IX2D(0, fieldDimension+1)] = 0.5*(x[IX2D(1, fieldDimension+1)] +
+        x[IX2D(0, fieldDimension)]);
+    x[IX2D(fieldDimension+1, 0)] = 0.5*(x[IX2D(fieldDimension, 0)] +
+        x[IX2D(fieldDimension+1, 1)]);
+    x[IX2D(fieldDimension+1, fieldDimension+1)] = 0.5*(x[fieldDimension, fieldDimension+1] +
+        x[IX2D(fieldDimension+1, fieldDimension)]);
 }
 
 void Fluid::addSource(float* a, float* b) {
@@ -110,6 +189,16 @@ void Fluid::setTimeStep( float t ) {
 
 void Fluid::setIterations( char i ) {
     iterations = i;
+}
+
+void Fluid::addDensity(float amount, int x, int y) {
+    dens[IX2D(x, y)] += amount;
+}
+
+void Fluid::addVelocity(float amountX, float amountY, int x, int y) {
+    int index = IX2D(x, y);
+    vx[index] += amountX;
+    vy[index] += amountY;
 }
 
 #endif
