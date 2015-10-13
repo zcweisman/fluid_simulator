@@ -1,3 +1,9 @@
+/*
+ * Zachary Weisman
+ * GLSL.hpp
+ * A namespace for GL-task related functions
+ */
+
 #ifndef _GLSL_HPP_
 #define _GLSL_HPP_
 
@@ -5,10 +11,15 @@
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 #include <string.h>
+#include "glm/glm.hpp"
+#include "GLSL.h"
 
 namespace GLSL {
-    GLuint  loadShaders( const string, const string );
-    char*   textFileRead( const char* );
+    GLuint  loadShaders( const string, const string ); //Done
+    GLuint  initShaderVars( GLuint );
+    char*   textFileRead( const char* );                //Done
+    int     initVBO( glm::vec2* );
+    void    draw();
 }
 
 GLuint GLSL::loadShaders( const string &vShader, const string &fShader ) {
@@ -54,7 +65,13 @@ GLuint GLSL::loadShaders( const string &vShader, const string &fShader ) {
 
     glUseProgram(prog);
     assert(glGetError() == GL_NO_ERROR);
+    GLProgram.program = prog;
     return prog;
+}
+
+GLuint GLSL::initShaderVars( GLuint prog ) {
+    GLProgram.vbo = glGetAttribLocation( GLProgram.program, "vertex_position" );
+
 }
 
 char* GLSL::textFileRead( const char* fn ) {
@@ -79,5 +96,26 @@ char* GLSL::textFileRead( const char* fn ) {
     }
     return content;
 }
+
+int GLSL::initVBO( glm::vec2* array ) {
+    int i, j, count = 0;
+
+    for ( j = 0; j < FLUIDSIZE; j++ ) {
+        for ( i = 0; i < FLUIDSIZE; i++, count++ )
+                vertex_array[count] = glm::vec2(i+1, j+1);
+    }
+
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * FLUIDSIZE*FLUIDSIZE,
+     array, GL_STATIC_DRAW);
+}
+
+void GLSL::draw() {
+    glEnableVertexAttribArray(/*Vertex position buffer object "aPos"*/);
+    glBindBuffer(GL_ARRAY_BUFFER, /*pbo*/);
+    glVertexAttribPointer()
+}
+
 
 #endif

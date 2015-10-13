@@ -1,3 +1,9 @@
+/*
+ * Zachary Weisman
+ * main.cpp
+ * Accomplishes tasks related to initializing the GL pipeline
+ */
+
 #include <iostream>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -5,11 +11,13 @@
 #include "GLSL.hpp"
 #include "simulator.hpp"
 
-GLuint program;
+#define FLUIDSIZE 8
 
 static void key_callback(GLFWwindow*, int, int, int, int);
 static void error_callback(int, const char*);
 static void cursor_position_callback(GLFWwindow*, double, double);
+
+static GLProgram program;
 
 void main() {
     const GLubyte* renderer;
@@ -37,9 +45,31 @@ void main() {
         exit(EXIT_FAILURE);
     }
 
-    Simulator sim   = new Simulator(8, );
+    glfwMakeContextCurrent(window);
+    glfwSwapInterval(1);
+
+    Simulator sim = new Simulator(FLUIDSIZE, windowWidth);
+
+    while ( 1 ) {
+        sim.update();
+    }
 
     return 0;
 }
 
-static void key_callback(GLFWwindow* window)
+static void key_callback(GLFWwindow* window, int key, int scancode,
+int action, int mods) {
+            ;
+}
+
+static void error_callback(int error, const char* description) {
+    fputs(description, error);
+}
+
+static void cursor_positon_callback(GLFWwindow* w, double x, double y) {
+    static double last_x = x;
+    static double last_y = y;
+
+    static double dx = x - last_x;
+    static double dy = y - last_y;
+}
