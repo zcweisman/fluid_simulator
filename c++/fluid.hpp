@@ -180,7 +180,7 @@ void Fluid::setViscosity( float v ) {
 }
 
 void Fluid::setDiffuse( float d ) {
-    density = d;
+    diffusion = d;
 }
 
 void Fluid::setTimeStep( float t ) {
@@ -192,13 +192,13 @@ void Fluid::setIterations( char i ) {
 }
 
 void Fluid::addDensity(float amount, int x, int y) {
-    dens[IX2D(x, y)] += amount;
+    densPrev[IX2D(x, y)] += amount;
 }
 
 void Fluid::addVelocity(float amountX, float amountY, int x, int y) {
     int index = IX2D(x, y);
-    vx[index] += amountX;
-    vy[index] += amountY;
+    vx0[index] += amountX;
+    vy0[index] += amountY;
 }
 
 #endif

@@ -7,13 +7,6 @@
 #ifndef _GLSL_HPP_
 #define _GLSL_HPP_
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <stdio.h>
-#include <string.h>
-#include "glm/glm.hpp"
-#include "GLSL.h"
-
 namespace GLSL {
     GLuint  loadShaders( const std::string, const std::string ); //Done
     GLuint  initShaderVars();                           //Done

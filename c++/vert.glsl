@@ -1,12 +1,12 @@
 #version 330
 
-in vec2 vertex_position;
-in float vertex_pressure;
-int vec2 vertex_velocity;
+in vec2     vertex_position;
+in float    vertex_density;
+in vec2     vertex_velocity;
 
-out vec2 vertex_position;
-out vec2 vertex_color
-out float final_color;
+out vec2    vertex_position;
+out vec2    vertex_color
+out float   final_color;
 
 uniform float field_dimension;
 

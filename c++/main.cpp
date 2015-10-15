@@ -8,16 +8,21 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include "structs.h"
+#include "fluid.hpp"
 #include "GLSL.hpp"
-#include "simulator.hpp"
 
 #define FLUIDSIZE 8
+
+void initUpdateObject();
 
 static void key_callback(GLFWwindow*, int, int, int, int);
 static void error_callback(int, const char*);
 static void cursor_position_callback(GLFWwindow*, double, double);
 
 static GLProgram program;
+static UpdateObject object;
+static GLFWwindow* window;
 
 void main() {
     const GLubyte* renderer;
@@ -47,17 +52,32 @@ void main() {
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
+
+    initUpdateObject();
+
     glfwSetKeyCallback(window, key_callback);
     glfwSetCursorPosCallback(window, cursor_positon_callback);
     glfwSetMouseButtonCallback(window, mouse_click_callback);
 
-    Simulator* sim = new Simulator(FLUIDSIZE, windowWidth);
+    Fluid* field = new Fluid(FLUIDSIZE, windowWidth);
+    field->setDiffuse(0.2);
+    field->setTimeStep(0.1);
+    field->setViscosity(0.7);
+    field->setIterations(20);
+
+    GLSL::loadShaders("vert.glsl", "frag.glsl");
+    GLSL::initShaderVars();
+    GLSL::initVBO();
 
     glClearColor(0.1, 0.6, 0.5, 0.5);
 
     while ( 1 ) {
         //Pass the simulator system updates
-        sim->update();
+        field->addVelocity( object.velocityXAmount, object.velocityYAmount,
+         object.velocityXPos, object.velocityYPos );
+        field->addDensity( object.densityAmount, object.densityXPos,
+         object.densityYPos );
+        field->update();
     }
 
     return 0;
@@ -75,22 +95,52 @@ static void error_callback(int error, const char* description) {
 
 static void cursor_positon_callback(GLFWwindow* w, double x, double y) {
     if ( program.mouse_click ) {
-        static double last_x = x;
-        static double last_y = y;
+        static double last_x = 0;
+        static double last_y = 0;
 
-        static double dx = x - last_x;
-        static double dy = y - last_y;
+        update.velocityXAmount = x - last_x;
+        update.velocityYAmount = y - last_y;
+        update.velocityXPos = x; // Need to translate this to object space
+        update.velocityYPos = y;
+
+        last_x = x;
+        last_y = y;
+
+        update.densityAmount += 0.5;//???
+        update.densityXPos = x;
+        update.densityYPos = y;
     } else {
+        density = 0;
         static double dx = 0;
         static double dy = 0;
     }
+
+    object.mouseXPos = x;
+    object.mouseYPos = y;
 
     return;
 }
 
 static void mouse_click_callback(GLFWwindow* w, int button, int action, int mods) {
-    if (action == GLFW_PRESS) program.mouse_click = true;
-    else program.mouse_click = false;
+    if ( action == GLFW_PRESS ) {
+        program.mouse_click = true;
+        object.densityAmount += 0.5; //Some arbitrary number
+    } else if ( action == GLFW_RELEASE ) {
+        program.mouse_click = false;
+        object.densityAmount = 0;
+    }
 
     return;
+}
+
+void initUpdateObject() {
+    object.densityXPos      = 0.0;
+    object.densityYPos      = 0.0;
+    object.densityAmount    = 0.0;
+    object.velocityXAmount  = 0.0;
+    object.velocityYAmount  = 0.0;
+    object.velocityXPos     = 0.0;
+    object.velocityYPos     = 0.0;
+    object.mouseXPos        = 0.0;
+    object.mouseYPos        = 0.0;
 }
