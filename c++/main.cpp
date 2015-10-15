@@ -47,11 +47,17 @@ void main() {
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
+    glfwSetKeyCallback(window, key_callback);
+    glfwSetCursorPosCallback(window, cursor_positon_callback);
+    glfwSetMouseButtonCallback(window, mouse_click_callback);
 
-    Simulator sim = new Simulator(FLUIDSIZE, windowWidth);
+    Simulator* sim = new Simulator(FLUIDSIZE, windowWidth);
+
+    glClearColor(0.1, 0.6, 0.5, 0.5);
 
     while ( 1 ) {
-        sim.update();
+        //Pass the simulator system updates
+        sim->update();
     }
 
     return 0;
@@ -60,6 +66,7 @@ void main() {
 static void key_callback(GLFWwindow* window, int key, int scancode,
 int action, int mods) {
             ;
+            //So far nothing for key press.
 }
 
 static void error_callback(int error, const char* description) {
@@ -67,9 +74,23 @@ static void error_callback(int error, const char* description) {
 }
 
 static void cursor_positon_callback(GLFWwindow* w, double x, double y) {
-    static double last_x = x;
-    static double last_y = y;
+    if ( program.mouse_click ) {
+        static double last_x = x;
+        static double last_y = y;
 
-    static double dx = x - last_x;
-    static double dy = y - last_y;
+        static double dx = x - last_x;
+        static double dy = y - last_y;
+    } else {
+        static double dx = 0;
+        static double dy = 0;
+    }
+
+    return;
+}
+
+static void mouse_click_callback(GLFWwindow* w, int button, int action, int mods) {
+    if (action == GLFW_PRESS) program.mouse_click = true;
+    else program.mouse_click = false;
+
+    return;
 }

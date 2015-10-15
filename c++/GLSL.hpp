@@ -15,14 +15,16 @@
 #include "GLSL.h"
 
 namespace GLSL {
-    GLuint  loadShaders( const string, const string ); //Done
-    GLuint  initShaderVars( GLuint );
+    GLuint  loadShaders( const std::string, const std::string ); //Done
+    GLuint  initShaderVars();                           //Done
     char*   textFileRead( const char* );                //Done
-    int     initVBO( glm::vec2* );
+    int     initVBO();
     void    draw();
 }
 
-GLuint GLSL::loadShaders( const string &vShader, const string &fShader ) {
+//Done
+GLuint GLSL::loadShaders( const std::string &vShader, const std::string &fShader ) {
+    fprintf(stderr, "Installing shaders...\n");
     GLuint prog, vao;
     GLint rc;
 
@@ -65,12 +67,23 @@ GLuint GLSL::loadShaders( const string &vShader, const string &fShader ) {
 
     glUseProgram(prog);
     assert(glGetError() == GL_NO_ERROR);
-    GLProgram.program = prog;
+    program.program = prog;
+
+    fprintf(stderr, "Successfully installed shaders\n");
     return prog;
 }
 
-GLuint GLSL::initShaderVars( GLuint prog ) {
-    GLProgram.vbo = glGetAttribLocation( GLProgram.program, "vertex_position" );
+//Done
+GLuint GLSL::initShaderVars() {
+    program.attribute_vertex = glGetAttribLocation(
+        program.program, "vertex_position"
+    );
+    program.attribute_density = glGetAttribLocation(
+        program.program, "vertex_density"
+    );
+    program.attribute_velocity = glGetAttribLocation(
+        program.program, "vertex_velocity"
+    );
 
 }
 
@@ -97,24 +110,47 @@ char* GLSL::textFileRead( const char* fn ) {
     return content;
 }
 
-int GLSL::initVBO( glm::vec2* array ) {
+int GLSL::initVBO() {
     int i, j, count = 0;
 
     for ( j = 0; j < FLUIDSIZE; j++ ) {
-        for ( i = 0; i < FLUIDSIZE; i++, count++ )
-                vertex_array[count] = glm::vec2(i+1, j+1);
+        for ( i = 0; i < FLUIDSIZE; i++, count++ ) {
+                program.vertex_array[count].x = (i+1-0.5)/FLUIDSIZE;
+                program.vertex_array[count].y = (j+1-0.5)/FLUIDSIZE;
+                program.index_array[count] = count; //Simply references the current
+                                                    //index to handle in shaders
+        }
     }
 
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * FLUIDSIZE*FLUIDSIZE,
-     array, GL_STATIC_DRAW);
+    glGenBuffers( 1, &(program.vbo) );
+    glBindBuffer( GL_ARRAY_BUFFER, program.vbo );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( Vector2D )*FLUIDSIZE*FLUIDSIZE,
+     program.vertex_array, GL_STATIC_DRAW );
+
+    glGenBuffers( 1, &(program.velbo) );
+    glBindBuffer( GL_ARRAY_BUFFER, program.velbo );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( Vector2D )*FLUIDSIZE*FLUIDSIZE,
+     program.velocity_array, GL_STATIC_DRAW );
+
+    glGenBuffers( 1, &(program.dbo) );
+    glBindBuffer( GL_ARRAY_BUFFER, program.dbo );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( float )*FLUIDSIZE*FLUIDSIZE,
+     program.density_array )
+
+    glGenBuffers( 1, &(program.ibo) );
+    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, program.ibo );
+    glBufferData( GL_ELEMENT_ARRAY_BUFFER, FLUIDSIZE*FLUIDSIZE*sizeof(GLuint),
+     program.index_array, GL_STATIC_DRAW );
 }
 
 void GLSL::draw() {
-    glEnableVertexAttribArray(/*Vertex position buffer object "aPos"*/);
-    glBindBuffer(GL_ARRAY_BUFFER, /*pbo*/);
-    glVertexAttribPointer()
+    glEnableVertexAttribArray( program.attribute_reference );
+    glBindBuffer( GL_ARRAY_BUFFER, program.vbo );
+    glVertexAttribPointer( program.attribute_reference, 2, GL_FLOAT, GL_FALSE, 0, 0 );
+
+    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, program.ibo );
+    //Transformations here
+    glDrawElements( GL_POINTS, FLUIDSIZE*FLUIDSIZE, GL_UNSIGNED_INT, 0 );
 }
 
 
