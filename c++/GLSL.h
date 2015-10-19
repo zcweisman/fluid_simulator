@@ -21,6 +21,7 @@ typedef struct Program {
     GLuint      attribute_density;
     GLuint      attribute_velocity;
     bool        mouse_click;
+    GLuint      fieldsize;
 } GLProgram;
 
 #endif

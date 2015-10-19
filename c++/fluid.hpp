@@ -1,12 +1,23 @@
+/*
+ * Zachary Weisman
+ * fluid.hpp
+ * Contains functions for manipulating the fluid space
+ * Credit to Jos Stam for the algorithm
+ * Credit: http://www.dgp.toronto.edu/people/stam/reality/Research/pdf/GDC03.pdf
+ */
+
 #ifndef _FLUID_HPP_
 #define _FLUID_HPP_
+
+#include <math.h>
+#define N 8
 
 #define SWAP( x0, x ) { float* tmp=x0; x0=x; x=tmp; }
 #define IX2D( x, y ) ( (x) + (N+2) * y )
 #define IX3D( x, y, z ) ( (x) + (y) * (N+2) + (z) * (N+2) * (N+2) )
 
 class Fluid {
-private:
+
     float *vx, *vy, *vx0, *vy0, *dens, *densPrev;
     float diffusion, viscosity, dt;
     short fieldDimension, fieldArraySize, windowWidth, windowHeight;
@@ -19,6 +30,7 @@ private:
     void project(float*, float*, float*);
     void setBnd(int, float*); //Done
     void addSource(float*, float*); //Done
+    void project( float*, float*, float*, float* );
 
 public:
     Fluid( short, short );  //Constructor
@@ -32,19 +44,20 @@ public:
     float*  getYVelocity(); //Done
     void    addDensity(float, int, int); //Done
     void    addVelocity(float, float, int, int); //Done
+    void    setIterations(char);
 };
 
 Fluid::Fluid(short field, short window) {
     fieldDimension = field;
-    fieldArraySize = Math.pow(fieldDimension+2, 2);
+    fieldArraySize = pow(fieldDimension+2, 2);
     windowWidth = windowHeight = window;
 
-    vx          = calloc( fieldArraySize*sizeof(float) );
-    vy          = calloc( fieldArraySize*sizeof(float) );
-    vx0         = calloc( fieldArraySize*sizeof(float) );
-    vy0         = calloc( fieldArraySize*sizeof(float) );
-    dens        = calloc( fieldArraySize*sizeof(float) );
-    densPrev    = calloc( fieldArraySize*sizeof(float) );
+    vx          = (float*)calloc( fieldArraySize, sizeof(float) );
+    vy          = (float*)calloc( fieldArraySize, sizeof(float) );
+    vx0         = (float*)calloc( fieldArraySize, sizeof(float) );
+    vy0         = (float*)calloc( fieldArraySize, sizeof(float) );
+    dens        = (float*)calloc( fieldArraySize, sizeof(float) );
+    densPrev    = (float*)calloc( fieldArraySize, sizeof(float) );
 }
 
 Fluid::~Fluid() {
@@ -57,17 +70,16 @@ Fluid::~Fluid() {
 }
 
 void Fluid::update() {
-    updateParams();
     updateVelocity(vx, vy, vx0, vy0);
     updateDensity(dens, densPrev, vx, vy);
 }
 
 void Fluid::updateDensity(float* x, float* x0, float* u, float* v) {
-    addSource(x, x0);
-    SWAP(x0, x);
-    diffuse(0, x, x0);
-    SWAP(x0, x);
-    advect(0, x, x0);
+    addSource( x, x0 );
+    SWAP( x0, x );
+    diffuse( 0, x, x0 );
+    SWAP( x0, x );
+    advect( 0, x, x0, u, v );
 }
 
 void Fluid::updateVelocity(float* u, float* v, float* u0, float* v0) {
@@ -85,7 +97,7 @@ void Fluid::updateVelocity(float* u, float* v, float* u0, float* v0) {
     project(u, v, u0, v0);
 }
 
-void Field::diffuse(int b, float* x, float* x0) {
+void Fluid::diffuse(int b, float* x, float* x0) {
     unsigned int i, j, k;
     float a = dt*diffusion*fieldDimension*fieldDimension;
     for ( k = 0; k < iterations; k++ ) {
@@ -102,7 +114,7 @@ void Field::diffuse(int b, float* x, float* x0) {
     }
 }
 
-void Field::advect(int b, float* d, float* d0, float* u, float* v) {
+void Fluid::advect(int b, float* d, float* d0, float* u, float* v) {
     int i, j, i0, j0, i1, j1;
     float x, y, s0, t0, s1, t1, dt0;
 
@@ -137,7 +149,7 @@ void Field::advect(int b, float* d, float* d0, float* u, float* v) {
     setBnd(b,d);
 }
 
-void Fluid::setBnd(int b, float* d) {
+void Fluid::setBnd(int b, float* x) {
     int i;
 
     for ( i = 1; i <= fieldDimension; i++ ) {
@@ -161,6 +173,43 @@ void Fluid::setBnd(int b, float* d) {
 void Fluid::addSource(float* a, float* b) {
     unsigned int i;
     for ( i = 0; i < fieldArraySize; i++ ) a[i] += dt * b[i];
+}
+
+void Fluid::project( float* u, float* v, float* p, float* div ) {
+    int i, j, k;
+    float h;
+    h = 1.0/N;
+
+    for ( i=1 ; i<=N ; i++ ) {
+        for ( j=1 ; j<=N ; j++ ) {
+            div[IX2D(i,j)] = -0.5*h*(u[IX2D(i+1,j)]-u[IX2D(i-1,j)]+
+                v[IX2D(i,j+1)]-v[IX2D(i,j-1)]);
+            p[IX2D(i,j)] = 0;
+        }
+    }
+
+    setBnd ( 0, div );
+    setBnd ( 0, p );
+
+    for ( k=0 ; k<iterations ; k++ ) {
+        for ( i=1 ; i<=N ; i++ ) {
+            for ( j=1 ; j<=N ; j++ ) {
+                p[IX2D(i,j)] = (div[IX2D(i,j)]+p[IX2D(i-1,j)]+p[IX2D(i+1,j)]+
+                    p[IX2D(i,j-1)]+p[IX2D(i,j+1)])/4;
+            }
+        }
+        setBnd ( 0, p );
+    }
+
+    for ( i=1 ; i<=N ; i++ ) {
+        for ( j=1 ; j<=N ; j++ ) {
+            u[IX2D(i,j)] -= 0.5*(p[IX2D(i+1,j)]-p[IX2D(i-1,j)])/h;
+            v[IX2D(i,j)] -= 0.5*(p[IX2D(i,j+1)]-p[IX2D(i,j-1)])/h;
+        }
+    }
+
+    setBnd ( 1, u );
+    setBnd ( 2, v );
 }
 
 float* Fluid::getDensity() {
