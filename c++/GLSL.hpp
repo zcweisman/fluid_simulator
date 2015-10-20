@@ -9,20 +9,23 @@
 
 namespace GLSL {
     GLuint  loadShaders( const std::string&, const std::string& ); //Done
-    void  initShaderVars();                           //Done
+    void    initShaderVars();                           //Done
     char*   textFileRead( const char* );                //Done
     void    initVBO();
-    void    draw();
+    void    bufferData(Fluid*);
+    void    initArrays();
 }
 
-//Done
+//Done - No GL Errors
 GLuint GLSL::loadShaders( const std::string &vertShader, const std::string &fragShader ) {
     fprintf(stderr, "Installing shaders...\n");
     GLuint prog, vao;
-    GLint rc;
+    GLint rc, err;
 
     glGenVertexArrays( 1, &vao );
+    std::cout << "GL ERROR: " << glGetError() << "\n";
     glBindVertexArray( vao );
+    std::cout << "GL ERROR: " << glGetError() << "\n";
 
     fprintf( stderr, "Creating shader programs..." );
     GLuint VS = glCreateShader( GL_VERTEX_SHADER );
@@ -39,36 +42,37 @@ GLuint GLSL::loadShaders( const std::string &vertShader, const std::string &frag
 
     glCompileShader(VS);
     glGetShaderiv(VS, GL_COMPILE_STATUS, &rc);
+    glGetShaderiv( VS, GL_INFO_LOG_LENGTH, &err );
+
     if ( !rc ) {
         printf("Error compiling vertex shader %s\n", vertShader.c_str());
-        /*GLint logsize = 0;
-        glGetShaderiv(VS, GL_INFO_LOG_LENGTH, &logsize);
-        if ( logsize > 1 ) {
-            GLchar* log_string = new char[logsize + 1];
-            glGetShaderInfoLog(VS, logsize, 0, log_string);
-            fprintf(stderr, "Log found:\n%s", log_string );
-
-            delete log_string;
-        }*/
         return false;
     }
 
+    if ( err > 1 ) {
+        GLchar* log_string = new char[err + 1];
+        glGetShaderInfoLog( VS, err, 0, log_string );
+        std::cout << "Log found  \n" << log_string << std::endl;
+
+        delete log_string;
+    }
     glCompileShader(FS);
     glGetShaderiv(FS, GL_COMPILE_STATUS, &rc);
+    glGetShaderiv( FS, GL_INFO_LOG_LENGTH, &err );
 
     if ( !rc ) {
         printf("Error compiling fragment shader %s\n", fragShader.c_str());
-        /*GLint logsize = 0;
-        glGetShaderiv(FS, GL_INFO_LOG_LENGTH, &logsize);
-        if ( logsize > 1 ) {
-            GLchar* log_string = new char[logsize + 1];
-            glGetShaderInfoLog(FS, logsize, 0, log_string);
-            fprintf(stderr, "Log found:\n%s", log_string );
-
-            delete log_string;
-        }*/
         return false;
     }
+
+    if ( err > 1 ) {
+        GLchar* log_string = new char[err + 1];
+        glGetShaderInfoLog( FS, err, 0, log_string );
+        std::cout << "Log found  \n" << log_string << std::endl;
+
+        delete log_string;
+    }
+
     prog = glCreateProgram();
     glAttachShader(prog, VS);
     glAttachShader(prog, FS);
@@ -83,29 +87,33 @@ GLuint GLSL::loadShaders( const std::string &vertShader, const std::string &frag
 
     glUseProgram( prog );
 
-    program.program = prog;
-
     fprintf(stderr, "Successfully installed shaders\n");
     return prog;
 }
 
-//Done
+//Done - No GL Errors
 void GLSL::initShaderVars() {
+    glUseProgram( program.program );
     program.attribute_vertex = glGetAttribLocation(
         program.program, "vertex_position"
     );
-    /*std::cout << "GL ERROR: " << glGetError() << "\n";
+    std::cout << "Vertex Attribute Shader Address: " << program.attribute_vertex
+        << std::endl;
+
     program.attribute_density = glGetAttribLocation(
         program.program, "vertex_density"
     );
-    std::cout << "GL ERROR: " << glGetError() << "\n";*/
+    std::cout << "Density Attribute Shader Address: " << program.attribute_density
+        << std::endl;
+
     program.attribute_velocity = glGetAttribLocation(
         program.program, "vertex_velocity"
     );
-    program.uniform_size = glGetUniformLocation(
+    std::cout << "Velocity Attribute Shader Address: " << program.attribute_velocity
+        << std::endl;
+    /*program.uniform_size = glGetUniformLocation(
         program.program, "field_dimension"
-    );
-
+    );*/
 }
 
 char* GLSL::textFileRead( const char* fn ) {
@@ -131,81 +139,96 @@ char* GLSL::textFileRead( const char* fn ) {
     return content;
 }
 
-void GLSL::initVBO() {
-    assert(glGetError() == GL_NO_ERROR);
-    int i, j, count = 0;
+void GLSL::initArrays() {
+    int i, j;
+    GLuint count = 0;
 
-    for ( j = 0; j < FLUIDSIZE; j++ ) {
-        for ( i = 0; i < FLUIDSIZE; i++, count++ ) {
-                program.vertex_array[count].x = (i+1-0.5)/FLUIDSIZE;
-                program.vertex_array[count].y = (j+1-0.5)/FLUIDSIZE;
-                program.index_array[count] = (GLuint)count; //Simply references the current
-                program.density_array[count] = 0.0f;
-                program.velocity_array[count].x = 0.0f;
-                program.velocity_array[count].y = 0.0f;
-                                                    //index to handle in shaders
+    //Good
+    for ( j = 0.0f; j < FLUIDSIZE; j++ ) {
+        for ( i = 0.0f; i < FLUIDSIZE; i++, count++ ) {
+            program.vertex_array[count*3] = (GLfloat)((i+1.0f-0.5f)/FLUIDSIZE);
+            program.vertex_array[count*3+1] = (GLfloat)((j+1.0f-0.5f)/FLUIDSIZE);
+            program.vertex_array[count*3+2] = (GLfloat)0.0f;
+            program.index_array[count] = count; //Simply references the current
+            program.density_array[count] = 0.0f;
+            program.velocity_array[count*2] = 1.0f;
+            program.velocity_array[count*2+1] = 1.0f;
+                                            //index to handle in shaders
         }
     }
 
-    glGenBuffers( 1, &(program.vbo) );
-    glBindBuffer( GL_ARRAY_BUFFER, program.vbo );
-    glBufferData( GL_ARRAY_BUFFER, sizeof( Vector2D )*FLUIDSIZE*FLUIDSIZE,
-     program.vertex_array, GL_STATIC_DRAW );
-assert(glGetError() == GL_NO_ERROR);
-    glGenBuffers( 1, &(program.velbo) );
-    glBindBuffer( GL_ARRAY_BUFFER, program.velbo );
-    glBufferData( GL_ARRAY_BUFFER, sizeof( Vector2D )*FLUIDSIZE*FLUIDSIZE,
-     program.velocity_array, GL_STATIC_DRAW );
-assert(glGetError() == GL_NO_ERROR);
-
-    glGenBuffers( 1, &(program.dbo) );
-    glBindBuffer( GL_ARRAY_BUFFER, program.dbo );
-    glBufferData( GL_ARRAY_BUFFER, sizeof( GLfloat )*FLUIDSIZE*FLUIDSIZE,
-     program.density_array, GL_STATIC_DRAW );
-assert(glGetError() == GL_NO_ERROR);
-
-    glGenBuffers( 1, &(program.ibo) );
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, program.ibo );
-    glBufferData( GL_ELEMENT_ARRAY_BUFFER, FLUIDSIZE*FLUIDSIZE*sizeof(GLuint),
-     program.index_array, GL_STATIC_DRAW );
-    assert(glGetError() == GL_NO_ERROR);
-    std::cout << "GL ERROR 1: " << glGetError() << "\n";
+    //Good
+    for ( i = 0.0f; i < FLUIDSIZE*FLUIDSIZE; i++ ) {
+        std::cout<<"Vertex X: "<<program.vertex_array[i*3];
+        std::cout<<" Vertex Y: "<<program.vertex_array[i*3+1];
+        std::cout<<"\nIndex: "<<program.index_array[i];
+        std::cout<<" Density: "<<program.density_array[i] << std::endl;
+    }
 }
 
-void GLSL::draw() {
-    assert(glGetError() == GL_NO_ERROR);
-    glEnableVertexAttribArray( program.attribute_vertex );
+void GLSL::initVBO() {
+    glUseProgram( program.program );
+
+    // Initialize vertex array
+    glGenBuffers( 1, &(program.vbo) );
+    std::cout << "VBO Address: " << program.vbo << std::endl;
     glBindBuffer( GL_ARRAY_BUFFER, program.vbo );
-    glVertexAttribPointer( program.attribute_vertex, 2, GL_FLOAT, GL_FALSE, 0, 0 );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( program.vertex_array ),
+     program.vertex_array, GL_STATIC_DRAW );
 
-    glEnableVertexAttribArray( program.attribute_density );
-    glBindBuffer( GL_ARRAY_BUFFER, program.dbo );
-    glVertexAttribPointer( program.attribute_density, 1, GL_FLOAT, GL_FALSE, 0, 0 );
+     // Initialize density array
+     glGenBuffers( 1, &(program.dbo) );
+     std::cout << "DBO Address: " << program.dbo << std::endl;
+     glBindBuffer( GL_ARRAY_BUFFER, program.dbo );
+     glBufferData( GL_ARRAY_BUFFER, sizeof( program.density_array ),
+        program.density_array, GL_STATIC_DRAW );
 
-    glEnableVertexAttribArray( program.attribute_velocity );
+    glGenBuffers( 1, &(program.velbo) );
+    std::cout << "VELBO Address: " << program.velbo << std::endl;
     glBindBuffer( GL_ARRAY_BUFFER, program.velbo );
-    std::cout << "GL ERROR 2: " << glGetError() << "\n";
-    glVertexAttribPointer( program.attribute_velocity, 2, GL_FLOAT, GL_FALSE, 0, 0 );
-    std::cout << "GL ERROR 3: " << glGetError() << "\n";
+    glBufferData( GL_ARRAY_BUFFER, sizeof( program.velocity_array ),
+     program.velocity_array, GL_STATIC_DRAW );
 
+     // Initialize index array
+    glGenBuffers( 1, &(program.ibo) );
+    std::cout << "IBO Address: " << program.ibo << std::endl;
     glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, program.ibo );
-    std::cout << "GL ERROR 4: " << glGetError() << "\n";
-    assert(glGetError() == GL_NO_ERROR);
+    glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( program.index_array ),
+     program.index_array, GL_STATIC_DRAW );
+    std::cout << "GL ERROR: " << glGetError() << "\n";
 
-    glUniform1i( program.uniform_size, FLUIDSIZE );
-    //Transformations here
-
-    assert(glGetError() == GL_NO_ERROR);
-    glDrawElements( GL_POINTS, FLUIDSIZE*FLUIDSIZE, GL_UNSIGNED_INT, 0 );
-    std::cout << "GL ERROR 5: " << glGetError() << "\n";
-    assert(glGetError() == GL_NO_ERROR);
-
-    glDisableVertexAttribArray( program.attribute_vertex );
-    glDisableVertexAttribArray( program.attribute_density );
-    glDisableVertexAttribArray( program.attribute_velocity );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
     glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-    std::cout << "GL ERROR 6: " << glGetError() << "\n";
+}
+
+void GLSL::bufferData(Fluid* field) {
+    float* vx = field->getXVelocity();
+    float* vy = field->getYVelocity();
+    float* d = field->getDensity();
+    int i = 0;
+
+    for ( ; i < FLUIDSIZE*FLUIDSIZE; i++ ) {
+        program.velocity_array[i*2] = vx[i+1];
+        program.velocity_array[i*2+1] = vy[i+1];
+        program.density_array[i] = d[i+1];
+    }
+
+
+    glBindBuffer( GL_ARRAY_BUFFER, program.vbo );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( program.vertex_array ),
+     program.vertex_array, GL_STATIC_DRAW );
+
+    glBindBuffer( GL_ARRAY_BUFFER, program.dbo );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( program.density_array ),
+     program.density_array, GL_STATIC_DRAW );
+
+    glBindBuffer( GL_ARRAY_BUFFER, program.velbo );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( program.velocity_array ),
+     program.velocity_array, GL_STATIC_DRAW );
+
+    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, program.ibo );
+    glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( program.index_array ),
+     program.index_array, GL_STATIC_DRAW );
 }
 
 #endif

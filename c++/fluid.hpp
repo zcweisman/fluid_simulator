@@ -13,8 +13,8 @@
 #define N 8
 
 #define SWAP( x0, x ) { float* tmp=x0; x0=x; x=tmp; }
-#define IX2D( x, y ) ( (x) + (N+2) * y )
-#define IX3D( x, y, z ) ( (x) + (y) * (N+2) + (z) * (N+2) * (N+2) )
+#define IX2D( x, y ) ( (x) + (FLUIDSIZE+2) * y )
+#define IX3D( x, y, z ) ( (x) + (y) * (FLUIDSIZE+2) + (z) * (FLUIDSIZE+2) * (FLUIDSIZE+2) )
 
 class Fluid {
 
@@ -27,7 +27,6 @@ class Fluid {
     void updateDensity(float*, float*, float*, float*); //Done
     void diffuse(int, float*, float*); //Done
     void advect(int, float*, float*, float*, float*); //Done
-    void project(float*, float*, float*);
     void setBnd(int, float*); //Done
     void addSource(float*, float*); //Done
     void project( float*, float*, float*, float* );
@@ -172,7 +171,12 @@ void Fluid::setBnd(int b, float* x) {
 
 void Fluid::addSource(float* a, float* b) {
     unsigned int i;
-    for ( i = 0; i < fieldArraySize; i++ ) a[i] += dt * b[i];
+    for ( i = 0; i < fieldArraySize; i++ ) {
+        float val = b[i];
+        if ( val > 1.0f ) val = 1.0f;
+        if ( val < 0.0f ) val = 0.0f;
+        a[i] += dt * val;
+    }
 }
 
 void Fluid::project( float* u, float* v, float* p, float* div ) {
