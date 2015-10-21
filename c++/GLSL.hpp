@@ -23,9 +23,9 @@ GLuint GLSL::loadShaders( const std::string &vertShader, const std::string &frag
     GLint rc, err;
 
     glGenVertexArrays( 1, &vao );
-    std::cout << "GL ERROR: " << glGetError() << "\n";
+    assert( glGetError() == GLEW_OK );
     glBindVertexArray( vao );
-    std::cout << "GL ERROR: " << glGetError() << "\n";
+    assert( glGetError() == GLEW_OK );
 
     fprintf( stderr, "Creating shader programs..." );
     GLuint VS = glCreateShader( GL_VERTEX_SHADER );
@@ -46,31 +46,30 @@ GLuint GLSL::loadShaders( const std::string &vertShader, const std::string &frag
 
     if ( !rc ) {
         printf("Error compiling vertex shader %s\n", vertShader.c_str());
+        if ( err > 1 ) {
+            GLchar* log_string = new char[err + 1];
+            glGetShaderInfoLog( VS, err, 0, log_string );
+            std::cout << "Log found  \n" << log_string << std::endl;
+
+            delete log_string;
+        }
         return false;
     }
 
-    if ( err > 1 ) {
-        GLchar* log_string = new char[err + 1];
-        glGetShaderInfoLog( VS, err, 0, log_string );
-        std::cout << "Log found  \n" << log_string << std::endl;
-
-        delete log_string;
-    }
     glCompileShader(FS);
     glGetShaderiv(FS, GL_COMPILE_STATUS, &rc);
     glGetShaderiv( FS, GL_INFO_LOG_LENGTH, &err );
 
     if ( !rc ) {
         printf("Error compiling fragment shader %s\n", fragShader.c_str());
+        if ( err > 1 ) {
+            GLchar* log_string = new char[err + 1];
+            glGetShaderInfoLog( FS, err, 0, log_string );
+            std::cout << "Log found  \n" << log_string << std::endl;
+
+            delete log_string;
+        }
         return false;
-    }
-
-    if ( err > 1 ) {
-        GLchar* log_string = new char[err + 1];
-        glGetShaderInfoLog( FS, err, 0, log_string );
-        std::cout << "Log found  \n" << log_string << std::endl;
-
-        delete log_string;
     }
 
     prog = glCreateProgram();
@@ -158,12 +157,12 @@ void GLSL::initArrays() {
     }
 
     //Good
-    for ( i = 0.0f; i < FLUIDSIZE*FLUIDSIZE; i++ ) {
+    /*for ( i = 0.0f; i < FLUIDSIZE*FLUIDSIZE; i++ ) {
         std::cout<<"Vertex X: "<<program.vertex_array[i*3];
         std::cout<<" Vertex Y: "<<program.vertex_array[i*3+1];
         std::cout<<"\nIndex: "<<program.index_array[i];
         std::cout<<" Density: "<<program.density_array[i] << std::endl;
-    }
+    }*/
 }
 
 void GLSL::initVBO() {
@@ -195,8 +194,8 @@ void GLSL::initVBO() {
     glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, program.ibo );
     glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( program.index_array ),
      program.index_array, GL_STATIC_DRAW );
-    std::cout << "GL ERROR: " << glGetError() << "\n";
 
+    assert( glGetError() == GLEW_OK );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
     glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
 }
@@ -214,9 +213,9 @@ void GLSL::bufferData(Fluid* field) {
     }
 
 
-    glBindBuffer( GL_ARRAY_BUFFER, program.vbo );
+    /*glBindBuffer( GL_ARRAY_BUFFER, program.vbo );
     glBufferData( GL_ARRAY_BUFFER, sizeof( program.vertex_array ),
-     program.vertex_array, GL_STATIC_DRAW );
+     program.vertex_array, GL_STATIC_DRAW );*/
 
     glBindBuffer( GL_ARRAY_BUFFER, program.dbo );
     glBufferData( GL_ARRAY_BUFFER, sizeof( program.density_array ),
@@ -226,9 +225,9 @@ void GLSL::bufferData(Fluid* field) {
     glBufferData( GL_ARRAY_BUFFER, sizeof( program.velocity_array ),
      program.velocity_array, GL_STATIC_DRAW );
 
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, program.ibo );
+    /*glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, program.ibo );
     glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( program.index_array ),
-     program.index_array, GL_STATIC_DRAW );
+     program.index_array, GL_STATIC_DRAW );*/
 }
 
 #endif

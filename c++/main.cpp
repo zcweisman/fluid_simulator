@@ -12,7 +12,7 @@
 #include <string>
 #include <stdio.h>
 
-#define FLUIDSIZE 8
+#define FLUIDSIZE 128
 
 #include "structs.h"
 #include "fluid.hpp"
@@ -64,21 +64,20 @@ int main( void ) {
     glfwSetMouseButtonCallback(window, mouse_click_callback);
 
     glewExperimental = GL_TRUE;
-    std::cout << "GL ERROR: " << glGetError() << "\n";
     if ( glewInit() != GLEW_OK ) {
         fprintf( stderr, "Failed to initialize GLEW\n" );
         return -1;
     }
-    std::cout << "GL ERROR: " << glGetError() << "\n";
+    std::cout << "Normal error <" << glGetError() << "> please ignore\n";
 
-    glClearColor( 0.5, 0.05, 0.06, 1.0 );
+    glClearColor( 0.1, 0.45, 0.5, 1.0 );
 
     std::cout << "Initialzing fluid field...";
 
     Fluid* field = new Fluid(FLUIDSIZE, windowWidth);
-    field->setDiffuse(0.2);
-    field->setTimeStep(0.1);
-    field->setViscosity(0.00089); // Viscosity of water
+    field->setDiffuse(0.9);
+    field->setTimeStep(0.01);
+    field->setViscosity(0.09); // Viscosity of water
     field->setIterations(20);
 
     int count = FLUIDSIZE-1, i = 0;
@@ -94,6 +93,23 @@ int main( void ) {
     GLSL::initArrays();
     GLSL::initVBO();
 
+    //field->addVelocity( -40.0, 0.0, 60, 60 );
+    /*field->addDensity( 255, 30, 20 );
+    field->addDensity( 255, 30, 21 );
+    field->addDensity( 255, 31, 20 );
+    field->addDensity( 255, 31, 21 );
+
+    field->addVelocity( 200, 200, 30, 20 );
+    field->addVelocity( 200, -150, 30, 30 );
+    field->addVelocity( -185, 20, 20, 10 );
+    field->addVelocity( 20, 20, 30, 10 );*/
+    //field->printDensityArray();
+
+    glEnable( GL_PROGRAM_POINT_SIZE );
+
+    //General framecount variable
+    count = 0;
+
     while ( !glfwWindowShouldClose( window ) ) {
         //Pass the simulator system updates
         glClear( GL_COLOR_BUFFER_BIT );
@@ -105,7 +121,11 @@ int main( void ) {
          object.densityYPos );
         field->update();
 
-        //GLSL::bufferData(field);
+        //if ( count++ < 2 ) {
+            //field->printDensityArray();
+        //}
+
+        GLSL::bufferData(field);
 
         glEnableVertexAttribArray( program.attribute_vertex );
         glBindBuffer( GL_ARRAY_BUFFER, program.vbo );
@@ -127,8 +147,7 @@ int main( void ) {
         //Transformations here
 
         assert(glGetError() == GL_NO_ERROR);
-        glDrawElements( GL_TRIANGLES, FLUIDSIZE*FLUIDSIZE, GL_UNSIGNED_INT, 0 );
-        //glDrawArrays( GL_TRIANGLES, 0, FLUIDSIZE*FLUIDSIZE );
+        glDrawElements( GL_POINTS, FLUIDSIZE*FLUIDSIZE, GL_UNSIGNED_INT, 0 );
         assert(glGetError() == GL_NO_ERROR);
 
         glDisableVertexAttribArray( program.attribute_vertex );
@@ -163,19 +182,30 @@ static void error_callback(int error, const char* description) {
 }
 
 static void cursor_position_callback( GLFWwindow* w, double x, double y ) {
-    object.mouseXPos = (int)((x/768)*FLUIDSIZE - 0.5f);
-    object.mouseYPos = reverse_index[(int)((y/768)*FLUIDSIZE - 0.5f)];
+    double realY = 768 - y;
+    object.mouseXPos = (int)((x/767)*FLUIDSIZE - 0.5f);
+    object.mouseYPos = (int)((realY/767)*FLUIDSIZE - 0.5f);
 
     if ( program.mouse_click ) {
-        static double dx = object.mouseXPos - object.mouseXPos0;
-        static double dy = object.mouseYPos - object.mouseYPos0;
+        double dx = object.mouseXPos - object.mouseXPos0;
+        double dy = object.mouseYPos - object.mouseYPos0;
+        static double x0 = 0;
+        static double y0 = 0;
 
-        object.velocityXAmount = dx/FLUIDSIZE;
-        object.velocityYAmount = dy/FLUIDSIZE;
+
+
+        //object.velocityXAmount = dx/FLUIDSIZE;
+        //object.velocityYAmount = dy/FLUIDSIZE;
+        object.velocityXAmount = (x - x0)/768;
+        object.velocityYAmount = (realY - y0)/768;
+        x0 = x;
+        y0 = realY;
+        std::cout << "Velocity X: " << object.velocityXAmount << std::endl;
+        std::cout << "Velocity y: " << object.velocityYAmount << std::endl;
         object.velocityXPos = object.mouseXPos; // Need to translate this to object space
         object.velocityYPos = object.mouseYPos;
 
-        object.densityAmount += 0.05;//???
+        object.densityAmount += 5;//???
         object.densityXPos = object.mouseXPos;
         object.densityYPos = object.mouseYPos;
     } else {
