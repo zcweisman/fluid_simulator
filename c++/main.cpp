@@ -12,10 +12,14 @@
 #include <string>
 #include <stdio.h>
 
-#define FLUIDSIZE 128
+#define FLUIDSIZE 150
 
 #include "structs.h"
 #include "fluid.hpp"
+
+static GLProgram program;
+static UpdateObject object;
+static GLFWwindow* window;
 
 void initUpdateObject();
 
@@ -23,11 +27,6 @@ static void key_callback( GLFWwindow*, int, int, int, int );
 static void error_callback( int, const char* );
 static void cursor_position_callback( GLFWwindow*, double, double );
 static void mouse_click_callback( GLFWwindow*, int, int, int );
-static int reverse_index[FLUIDSIZE];
-
-static GLProgram program;
-static UpdateObject object;
-static GLFWwindow* window;
 
 #include "GLSL.hpp"
 
@@ -75,13 +74,10 @@ int main( void ) {
     std::cout << "Initialzing fluid field...";
 
     Fluid* field = new Fluid(FLUIDSIZE, windowWidth);
-    field->setDiffuse(0.9);
-    field->setTimeStep(0.01);
-    field->setViscosity(0.09); // Viscosity of water
+    field->setDiffuse(0.5);
+    field->setTimeStep(0.001);
+    field->setViscosity(0.05); // Viscosity of water
     field->setIterations(20);
-
-    int count = FLUIDSIZE-1, i = 0;
-    for ( ; i < FLUIDSIZE; i++ ) reverse_index[i] = count--;
 
     std::cout << "Completed\n";
 
@@ -93,22 +89,29 @@ int main( void ) {
     GLSL::initArrays();
     GLSL::initVBO();
 
-    //field->addVelocity( -40.0, 0.0, 60, 60 );
-    /*field->addDensity( 255, 30, 20 );
-    field->addDensity( 255, 30, 21 );
-    field->addDensity( 255, 31, 20 );
-    field->addDensity( 255, 31, 21 );
+    field->addDensity( 100, 23, 23 );
+    field->addDensity( 255, 25, 23 );
+    field->addDensity( 255, 26, 23 );
+    field->addDensity( 255, 27, 23 );
+    field->addDensity( 255, 24, 26 );
+    field->addDensity( 255, 25, 26 );
+    field->addDensity( 255, 26, 26 );
+    field->addDensity( 255, 27, 26 );
+    field->addDensity( 255, 24, 24 );
+    field->addDensity( 255, 27, 24 );
+    field->addDensity( 255, 24, 25 );
+    field->addDensity( 255, 27, 25 );
 
-    field->addVelocity( 200, 200, 30, 20 );
-    field->addVelocity( 200, -150, 30, 30 );
-    field->addVelocity( -185, 20, 20, 10 );
-    field->addVelocity( 20, 20, 30, 10 );*/
+    field->addVelocity( 0, 200, 25, 25 );
+    field->addVelocity( 200, -200, 26, 24 );
+    field->addVelocity(-200, -200, 25, 24 );
+    field->addVelocity( 200, 200, 26, 26 );
     //field->printDensityArray();
 
     glEnable( GL_PROGRAM_POINT_SIZE );
 
     //General framecount variable
-    count = 0;
+    int count = 0;
 
     while ( !glfwWindowShouldClose( window ) ) {
         //Pass the simulator system updates
@@ -119,10 +122,9 @@ int main( void ) {
          object.velocityXPos, object.velocityYPos );
         field->addDensity( object.densityAmount, object.densityXPos,
          object.densityYPos );
-        field->update();
-
         //if ( count++ < 2 ) {
-            //field->printDensityArray();
+            field->update();
+            //std::cout << "END OF FRAME UPDATE\n";
         //}
 
         GLSL::bufferData(field);
@@ -137,9 +139,14 @@ int main( void ) {
         glVertexAttribPointer( program.attribute_density, 1, GL_FLOAT, GL_FALSE, 0, (void*)0 ); //Problem
 
         // Enable velocity array
-        glEnableVertexAttribArray( program.attribute_velocity );
-        glBindBuffer( GL_ARRAY_BUFFER, program.velbo );
-        glVertexAttribPointer( program.attribute_velocity, 2, GL_FLOAT, GL_FALSE, 0, (void*)0 ); //Problem
+        glEnableVertexAttribArray( program.attribute_velocity_x );
+        glBindBuffer( GL_ARRAY_BUFFER, program.velxbo );
+        glVertexAttribPointer( program.attribute_velocity_x, 1, GL_FLOAT, GL_FALSE, 0, (void*)0 ); //Problem
+
+        // Enable velocity array
+        glEnableVertexAttribArray( program.attribute_velocity_y );
+        glBindBuffer( GL_ARRAY_BUFFER, program.velybo );
+        glVertexAttribPointer( program.attribute_velocity_y, 1, GL_FLOAT, GL_FALSE, 0, (void*)0 ); //Problem
 
         //Bind the index array
         glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, program.ibo );
@@ -152,7 +159,8 @@ int main( void ) {
 
         glDisableVertexAttribArray( program.attribute_vertex );
         glDisableVertexAttribArray( program.attribute_density );
-        glDisableVertexAttribArray( program.attribute_velocity );
+        glDisableVertexAttribArray( program.attribute_velocity_x );
+        glDisableVertexAttribArray( program.attribute_velocity_y );
         glBindBuffer( GL_ARRAY_BUFFER, 0 );
         glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
         glUseProgram ( 0 );
@@ -162,7 +170,8 @@ int main( void ) {
 
     glDeleteBuffers( 1, &program.vbo );
     glDeleteBuffers( 1, &program.ibo );
-    glDeleteBuffers( 1, &program.velbo );
+    glDeleteBuffers( 1, &program.velxbo );
+    glDeleteBuffers( 1, &program.velybo );
     glDeleteBuffers( 1, &program.dbo );
 
     glfwTerminate();
@@ -183,8 +192,8 @@ static void error_callback(int error, const char* description) {
 
 static void cursor_position_callback( GLFWwindow* w, double x, double y ) {
     double realY = 768 - y;
-    object.mouseXPos = (int)((x/767)*FLUIDSIZE - 0.5f);
-    object.mouseYPos = (int)((realY/767)*FLUIDSIZE - 0.5f);
+    object.mouseXPos = (int)((x/(768-1))*FLUIDSIZE - 0.5f);
+    object.mouseYPos = (int)((realY/(768-1))*FLUIDSIZE - 0.5f);
 
     if ( program.mouse_click ) {
         double dx = object.mouseXPos - object.mouseXPos0;
@@ -192,12 +201,10 @@ static void cursor_position_callback( GLFWwindow* w, double x, double y ) {
         static double x0 = 0;
         static double y0 = 0;
 
-
-
         //object.velocityXAmount = dx/FLUIDSIZE;
         //object.velocityYAmount = dy/FLUIDSIZE;
-        object.velocityXAmount = (x - x0)/768;
-        object.velocityYAmount = (realY - y0)/768;
+        object.velocityXAmount = (x - x0);
+        object.velocityYAmount = (realY - y0);
         x0 = x;
         y0 = realY;
         std::cout << "Velocity X: " << object.velocityXAmount << std::endl;
@@ -209,7 +216,25 @@ static void cursor_position_callback( GLFWwindow* w, double x, double y ) {
         object.densityXPos = object.mouseXPos;
         object.densityYPos = object.mouseYPos;
     } else {
+        /*double dx = object.mouseXPos - object.mouseXPos0;
+        double dy = object.mouseYPos - object.mouseYPos0;
+        static double x0 = 0;
+        static double y0 = 0;
+
+        //object.velocityXAmount = dx/FLUIDSIZE;
+        //object.velocityYAmount = dy/FLUIDSIZE;
+        object.velocityXAmount = (x - x0);
+        object.velocityYAmount = (realY - y0);
+        x0 = x;
+        y0 = realY;
+        //std::cout << "Velocity X: " << object.velocityXAmount << std::endl;
+        //std::cout << "Velocity y: " << object.velocityYAmount << std::endl;
+        object.velocityXPos = object.mouseXPos; // Need to translate this to object space
+        object.velocityYPos = object.mouseYPos;*/
+        /**/
         object.densityAmount = 0;
+        object.densityXPos = object.mouseXPos;
+        object.densityYPos = object.mouseYPos;
     }
 
     object.mouseXPos0 = object.mouseXPos;
@@ -223,10 +248,10 @@ static void cursor_position_callback( GLFWwindow* w, double x, double y ) {
 static void mouse_click_callback(GLFWwindow* w, int button, int action, int mods) {
     if ( action == GLFW_PRESS ) {
         program.mouse_click = true;
-        object.densityAmount += 0.5; //Some arbitrary number
+        //object.densityAmount += 0.5; //Some arbitrary number
     } else if ( action == GLFW_RELEASE ) {
         program.mouse_click = false;
-        object.densityAmount = 0;
+        object.densityAmount += 5;
         std::cout << "CLICKITY CLICK\n";
     }
 

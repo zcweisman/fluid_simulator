@@ -5,16 +5,19 @@
 typedef struct Program {
     GLuint      program; //GL program parameter
     GLfloat     vertex_array[FLUIDSIZE*FLUIDSIZE*3]; //Array of vertices to be rendered
-    GLfloat     velocity_array[FLUIDSIZE*FLUIDSIZE*2];
+    GLfloat     velocity_x_array[FLUIDSIZE*FLUIDSIZE];
+    GLfloat     velocity_y_array[FLUIDSIZE*FLUIDSIZE];
     GLfloat     density_array[FLUIDSIZE*FLUIDSIZE];
     GLuint      index_array[FLUIDSIZE*FLUIDSIZE];  //Ordered vertex indices
-    GLuint      velbo;
+    GLuint      velxbo;
+    GLuint      velybo;
     GLuint      dbo;
     GLuint      vbo; //References the buffer object for the vertices
     GLuint      ibo; //References the buffer object for the indices
     GLint       attribute_vertex = 0; // References location of attrib in shader
     GLint       attribute_density = 0;
-    GLint       attribute_velocity = 0;
+    GLint       attribute_velocity_x = 0;
+    GLint       attribute_velocity_y = 0;
     GLint       uniform_size = 0;
     bool        mouse_click;
 } GLProgram;

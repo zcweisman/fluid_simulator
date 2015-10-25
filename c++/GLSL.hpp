@@ -7,6 +7,8 @@
 #ifndef _GLSL_HPP_
 #define _GLSL_HPP_
 
+#define IX2DNOBUF(x,y) ((x) + FLUIDSIZE*(y))
+
 namespace GLSL {
     GLuint  loadShaders( const std::string&, const std::string& ); //Done
     void    initShaderVars();                           //Done
@@ -105,10 +107,16 @@ void GLSL::initShaderVars() {
     std::cout << "Density Attribute Shader Address: " << program.attribute_density
         << std::endl;
 
-    program.attribute_velocity = glGetAttribLocation(
-        program.program, "vertex_velocity"
+    program.attribute_velocity_x = glGetAttribLocation(
+        program.program, "vertex_velocity_x"
     );
-    std::cout << "Velocity Attribute Shader Address: " << program.attribute_velocity
+    std::cout << "X Velocity Attribute Shader Address: " << program.attribute_velocity_x
+        << std::endl;
+
+    program.attribute_velocity_y = glGetAttribLocation(
+        program.program, "vertex_velocity_y"
+    );
+    std::cout << "Y Velocity Attribute Shader Address: " << program.attribute_velocity_y
         << std::endl;
     /*program.uniform_size = glGetUniformLocation(
         program.program, "field_dimension"
@@ -142,7 +150,6 @@ void GLSL::initArrays() {
     int i, j;
     GLuint count = 0;
 
-    //Good
     for ( j = 0.0f; j < FLUIDSIZE; j++ ) {
         for ( i = 0.0f; i < FLUIDSIZE; i++, count++ ) {
             program.vertex_array[count*3] = (GLfloat)((i+1.0f-0.5f)/FLUIDSIZE);
@@ -150,19 +157,17 @@ void GLSL::initArrays() {
             program.vertex_array[count*3+2] = (GLfloat)0.0f;
             program.index_array[count] = count; //Simply references the current
             program.density_array[count] = 0.0f;
-            program.velocity_array[count*2] = 1.0f;
-            program.velocity_array[count*2+1] = 1.0f;
-                                            //index to handle in shaders
+            program.velocity_x_array[count] = 0.0f;
+            program.velocity_y_array[count] = 0.0f;
         }
     }
 
-    //Good
-    /*for ( i = 0.0f; i < FLUIDSIZE*FLUIDSIZE; i++ ) {
-        std::cout<<"Vertex X: "<<program.vertex_array[i*3];
-        std::cout<<" Vertex Y: "<<program.vertex_array[i*3+1];
-        std::cout<<"\nIndex: "<<program.index_array[i];
-        std::cout<<" Density: "<<program.density_array[i] << std::endl;
-    }*/
+    /*program.vertex_array = (GLfloat*)calloc(sizeof(GLfloat), FLUIDSIZE*FLUIDSIZE*3);
+    program.velocity_x_array = (GLfloat*)calloc(sizeof(GLfloat), FLUIDSIZE*FLUIDSIZE);
+    program.velocity_y_array = (GLfloat*)calloc(sizeof(GLfloat), FLUIDSIZE*FLUIDSIZE);
+    program.density_array = (GLfloat*)calloc(sizeof(GLfloat), FLUIDSIZE*FLUIDSIZE);
+    program.index_array = (GLuint*)calloc(sizeof(GLfloat), FLUIDSIZE*FLUIDSIZE);*/
+
 }
 
 void GLSL::initVBO() {
@@ -182,11 +187,17 @@ void GLSL::initVBO() {
      glBufferData( GL_ARRAY_BUFFER, sizeof( program.density_array ),
         program.density_array, GL_STATIC_DRAW );
 
-    glGenBuffers( 1, &(program.velbo) );
-    std::cout << "VELBO Address: " << program.velbo << std::endl;
-    glBindBuffer( GL_ARRAY_BUFFER, program.velbo );
-    glBufferData( GL_ARRAY_BUFFER, sizeof( program.velocity_array ),
-     program.velocity_array, GL_STATIC_DRAW );
+    glGenBuffers( 1, &(program.velxbo) );
+    std::cout << "VELBO Address: " << program.velxbo << std::endl;
+    glBindBuffer( GL_ARRAY_BUFFER, program.velxbo );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( program.velocity_x_array ),
+     program.velocity_x_array, GL_STATIC_DRAW );
+
+    glGenBuffers( 1, &(program.velybo) );
+    std::cout << "VELBO Address: " << program.velybo << std::endl;
+    glBindBuffer( GL_ARRAY_BUFFER, program.velybo );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( program.velocity_y_array ),
+        program.velocity_y_array, GL_STATIC_DRAW );
 
      // Initialize index array
     glGenBuffers( 1, &(program.ibo) );
@@ -204,30 +215,27 @@ void GLSL::bufferData(Fluid* field) {
     float* vx = field->getXVelocity();
     float* vy = field->getYVelocity();
     float* d = field->getDensity();
-    int i = 0;
+    int i, j, count = 0;
 
-    for ( ; i < FLUIDSIZE*FLUIDSIZE; i++ ) {
-        program.velocity_array[i*2] = vx[i+1];
-        program.velocity_array[i*2+1] = vy[i+1];
-        program.density_array[i] = d[i+1];
+    for ( j = 1; j <= FLUIDSIZE; j++ ) {
+        for ( i = 1; i <= FLUIDSIZE; i++, count++ ) {
+            program.velocity_x_array[count] = vx[IX2D(i,j)];
+            program.velocity_y_array[count] = vy[IX2D(i,j)];
+            program.density_array[count] = d[IX2D(i,j)];
+        }
     }
-
-
-    /*glBindBuffer( GL_ARRAY_BUFFER, program.vbo );
-    glBufferData( GL_ARRAY_BUFFER, sizeof( program.vertex_array ),
-     program.vertex_array, GL_STATIC_DRAW );*/
 
     glBindBuffer( GL_ARRAY_BUFFER, program.dbo );
     glBufferData( GL_ARRAY_BUFFER, sizeof( program.density_array ),
      program.density_array, GL_STATIC_DRAW );
 
-    glBindBuffer( GL_ARRAY_BUFFER, program.velbo );
-    glBufferData( GL_ARRAY_BUFFER, sizeof( program.velocity_array ),
-     program.velocity_array, GL_STATIC_DRAW );
+    glBindBuffer( GL_ARRAY_BUFFER, program.velxbo );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( program.velocity_x_array ),
+     program.velocity_x_array, GL_STATIC_DRAW );
 
-    /*glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, program.ibo );
-    glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( program.index_array ),
-     program.index_array, GL_STATIC_DRAW );*/
+    glBindBuffer( GL_ARRAY_BUFFER, program.velybo );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( program.velocity_y_array ),
+        program.velocity_y_array, GL_STATIC_DRAW );
 }
 
 #endif

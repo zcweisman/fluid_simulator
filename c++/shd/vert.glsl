@@ -2,7 +2,8 @@
 
 in vec3     vertex_position;
 in float    vertex_density;
-in vec2     vertex_velocity;
+in float     vertex_velocity_x;
+in float     vertex_velocity_y;
 
 out vec3    vPos;
 out vec3    vCol;
@@ -22,7 +23,7 @@ void main() {
     vCol.g = 0.0;
     vCol.b = vertex_density;*/
     vDens = vertex_density;
-    vVel = vertex_velocity;
+    vVel = vec2(vertex_velocity_x, vertex_velocity_y);
 
     gl_Position.x = vertex_position.x*2.0-1.0;
     gl_Position.y = vertex_position.y*2.0-1.0;
