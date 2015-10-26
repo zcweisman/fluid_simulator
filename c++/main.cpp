@@ -272,4 +272,10 @@ void initUpdateObject() {
     object.mouseYPos        = 0.0;
     object.mouseXPos0       = 0;
     object.mouseYPos0       = 0;
+
+    program.attribute_vertex = 0; // References location of attrib in shader
+    program.attribute_density = 0;
+    program.attribute_velocity_x = 0;
+    program.attribute_velocity_y = 0;
+    program.uniform_size = 0;
 }

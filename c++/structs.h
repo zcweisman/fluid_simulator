@@ -14,11 +14,11 @@ typedef struct Program {
     GLuint      dbo;
     GLuint      vbo; //References the buffer object for the vertices
     GLuint      ibo; //References the buffer object for the indices
-    GLint       attribute_vertex = 0; // References location of attrib in shader
-    GLint       attribute_density = 0;
-    GLint       attribute_velocity_x = 0;
-    GLint       attribute_velocity_y = 0;
-    GLint       uniform_size = 0;
+    GLint       attribute_vertex;// = 0; // References location of attrib in shader
+    GLint       attribute_density;// = 0;
+    GLint       attribute_velocity_x;// = 0;
+    GLint       attribute_velocity_y;// = 0;
+    GLint       uniform_size;// = 0;
     bool        mouse_click;
 } GLProgram;
 
