@@ -16,7 +16,7 @@
 
 class Fluid {
 
-    float *vx, *vy, *vx0, *vy0, *dens, *s;
+    float *vx, *vy, *vz, *vx0, *vy0, *vz0, *dens, *s;
     float diffusion, viscosity, dt;
     short fieldDimension, fieldArraySize;
     char iterations;
@@ -47,12 +47,16 @@ public:
 Fluid::Fluid(short field, short window) {
     fieldDimension = field;
     fieldArraySize = pow(fieldDimension+2, 2);
+    int fieldArraySizeTwo;
+    fieldArraySizeTwo = pow(fieldDimension+2, 3);
 
     s           = (float*)calloc( fieldArraySize, sizeof(GLfloat) );
     vx          = (float*)calloc( fieldArraySize, sizeof(GLfloat) );
     vy          = (float*)calloc( fieldArraySize, sizeof(GLfloat) );
+    vz          = (float*)calloc( fieldArraySizeTwo, sizeof(GLfloat) );
     vx0         = (float*)calloc( fieldArraySize, sizeof(GLfloat) );
     vy0         = (float*)calloc( fieldArraySize, sizeof(GLfloat) );
+    vz0         = (float*)calloc( fieldArraySizeTwo, sizeof(GLfloat) );
     dens        = (float*)calloc( fieldArraySize, sizeof(GLfloat) );
 }
 
