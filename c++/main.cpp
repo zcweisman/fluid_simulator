@@ -15,11 +15,12 @@
 #define FLUIDSIZE 150
 
 #include "structs.h"
-#include "fluid.hpp"
 
 static GLProgram program;
 static UpdateObject object;
 static GLFWwindow* window;
+
+#include "fluid.hpp"
 
 void initUpdateObject();
 
@@ -28,12 +29,14 @@ static void error_callback( int, const char* );
 static void cursor_position_callback( GLFWwindow*, double, double );
 static void mouse_click_callback( GLFWwindow*, int, int, int );
 
-#include "GLSL.hpp"
+#include "glsl.hpp"
+#include "environment.hpp"
 
 int main( void ) {
     const GLubyte* renderer;
     const GLubyte* version;
     int windowHeight, windowWidth;
+    bool keys[128];
 
     initUpdateObject();
 
@@ -74,9 +77,11 @@ int main( void ) {
     std::cout << "Initialzing fluid field...";
 
     Fluid* field = new Fluid(FLUIDSIZE, windowWidth);
-    field->setDiffuse(0.5);
-    field->setTimeStep(0.001);
-    field->setViscosity(0.05); // Viscosity of water
+    //field->setDiffuse(0.5);
+    field->setTimeStep(0.0001);
+    //field->setViscosity(0.05); // Viscosity of water
+    field->setDiffuse(0.05);
+    field->setViscosity(0.05);
     field->setIterations(20);
 
     std::cout << "Completed\n";
@@ -89,24 +94,25 @@ int main( void ) {
     GLSL::initArrays();
     GLSL::initVBO();
 
-    field->addDensity( 100, 23, 23 );
-    field->addDensity( 255, 25, 23 );
-    field->addDensity( 255, 26, 23 );
-    field->addDensity( 255, 27, 23 );
-    field->addDensity( 255, 24, 26 );
-    field->addDensity( 255, 25, 26 );
-    field->addDensity( 255, 26, 26 );
-    field->addDensity( 255, 27, 26 );
-    field->addDensity( 255, 24, 24 );
-    field->addDensity( 255, 27, 24 );
-    field->addDensity( 255, 24, 25 );
-    field->addDensity( 255, 27, 25 );
+    /*field->addDensity( 1, 23, 23 );
+    field->addDensity( 1, 25, 23 );
+    field->addDensity( 1, 26, 23 );
+    field->addDensity( 1, 27, 23 );
+    field->addDensity( 1, 24, 26 );
+    field->addDensity( 1, 25, 26 );
+    field->addDensity( 1, 26, 26 );
+    field->addDensity( 1, 27, 26 );
+    field->addDensity( 1, 24, 24 );
+    field->addDensity( 1, 27, 24 );
+    field->addDensity( 1, 24, 25 );
+    field->addDensity( 1, 27, 25 );
 
-    field->addVelocity( 0, 200, 25, 25 );
-    field->addVelocity( 200, -200, 26, 24 );
-    field->addVelocity(-200, -200, 25, 24 );
-    field->addVelocity( 200, 200, 26, 26 );
-    //field->printDensityArray();
+    field->addVelocity( 0, 5, 25, 25 );
+    field->addVelocity( 5, -5, 26, 24 );
+    field->addVelocity(-5, -5, 25, 24 );
+    field->addVelocity( 5, 5, 26, 26 );*/
+
+    //Environment::addObstacle();
 
     glEnable( GL_PROGRAM_POINT_SIZE );
 
@@ -118,14 +124,30 @@ int main( void ) {
         glClear( GL_COLOR_BUFFER_BIT );
         glUseProgram( program.program );
 
-        field->addVelocity( object.velocityXAmount, object.velocityYAmount,
-         object.velocityXPos, object.velocityYPos );
+        //Camera::update();
+        field->addVelocity( object.velocityXAmount, object.velocityYAmount, 0,
+         object.velocityXPos, object.velocityYPos, 0 );
         field->addDensity( object.densityAmount, object.densityXPos,
-         object.densityYPos );
-        //if ( count++ < 2 ) {
-            field->update();
-            //std::cout << "END OF FRAME UPDATE\n";
-        //}
+         object.densityYPos, 0 );
+         field->addDensity( 255, 23, 23, 0 );
+         field->addDensity( 255, 25, 23, 0 );
+         field->addDensity( 255, 26, 23, 0 );
+         field->addDensity( 255, 27, 23, 0 );
+         field->addDensity( 255, 24, 26, 0 );
+         field->addDensity( 255, 25, 26, 0 );
+         field->addDensity( 255, 26, 26, 0 );
+         field->addDensity( 255, 27, 26, 0 );
+         field->addDensity( 255, 24, 24, 0 );
+         field->addDensity( 255, 27, 24, 0 );
+         field->addDensity( 255, 24, 25, 0 );
+         field->addDensity( 255, 27, 25, 0 );
+
+         field->addVelocity( -100, 100, 0, 25, 25, 0 );
+         field->addVelocity( 100, -100, 0, 26, 24, 0 );
+         field->addVelocity(-100, -100, 0, 25, 24, 0 );
+         field->addVelocity( 100, 100, 0, 26, 26, 0 );
+        field->update();
+        //field->printDensityArray();
 
         GLSL::bufferData(field);
 
@@ -150,7 +172,7 @@ int main( void ) {
 
         //Bind the index array
         glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, program.ibo );
-        //glUniform1i( program.uniform_size, FLUIDSIZE );
+        glUniform1i( program.uniform_size, FLUIDSIZE );
         //Transformations here
 
         assert(glGetError() == GL_NO_ERROR);
@@ -207,12 +229,12 @@ static void cursor_position_callback( GLFWwindow* w, double x, double y ) {
         object.velocityYAmount = (realY - y0);
         x0 = x;
         y0 = realY;
-        std::cout << "Velocity X: " << object.velocityXAmount << std::endl;
-        std::cout << "Velocity y: " << object.velocityYAmount << std::endl;
+        //std::cout << "Velocity X: " << object.velocityXAmount << std::endl;
+        //std::cout << "Velocity y: " << object.velocityYAmount << std::endl;
         object.velocityXPos = object.mouseXPos; // Need to translate this to object space
         object.velocityYPos = object.mouseYPos;
 
-        object.densityAmount += 5;//???
+        object.densityAmount += 200;//???
         object.densityXPos = object.mouseXPos;
         object.densityYPos = object.mouseYPos;
     } else {
@@ -240,7 +262,7 @@ static void cursor_position_callback( GLFWwindow* w, double x, double y ) {
     object.mouseXPos0 = object.mouseXPos;
     object.mouseYPos0 = object.mouseYPos;
 
-    std::cout << object.mouseXPos << ", " << object.mouseYPos << std::endl;
+    //std::cout << object.mouseXPos << ", " << object.mouseYPos << std::endl;
 
     return;
 }
@@ -248,10 +270,11 @@ static void cursor_position_callback( GLFWwindow* w, double x, double y ) {
 static void mouse_click_callback(GLFWwindow* w, int button, int action, int mods) {
     if ( action == GLFW_PRESS ) {
         program.mouse_click = true;
-        //object.densityAmount += 0.5; //Some arbitrary number
+        object.densityAmount += 5; //Some arbitrary number
+
     } else if ( action == GLFW_RELEASE ) {
         program.mouse_click = false;
-        object.densityAmount += 5;
+        object.densityAmount += 100;
         std::cout << "CLICKITY CLICK\n";
     }
 

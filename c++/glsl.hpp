@@ -118,9 +118,9 @@ void GLSL::initShaderVars() {
     );
     std::cout << "Y Velocity Attribute Shader Address: " << program.attribute_velocity_y
         << std::endl;
-    /*program.uniform_size = glGetUniformLocation(
+    program.uniform_size = glGetUniformLocation(
         program.program, "field_dimension"
-    );*/
+    );
 }
 
 char* GLSL::textFileRead( const char* fn ) {
@@ -147,9 +147,12 @@ char* GLSL::textFileRead( const char* fn ) {
 }
 
 void GLSL::initArrays() {
-    int i, j;
+    int i, j, k;
     GLuint count = 0;
 
+    /*for ( k = 0.0f; k < FLUIDSIZE; k++ ) {
+        ;
+    }*/
     for ( j = 0.0f; j < FLUIDSIZE; j++ ) {
         for ( i = 0.0f; i < FLUIDSIZE; i++, count++ ) {
             program.vertex_array[count*3] = (GLfloat)((i+1.0f-0.5f)/FLUIDSIZE);
@@ -159,15 +162,10 @@ void GLSL::initArrays() {
             program.density_array[count] = 0.0f;
             program.velocity_x_array[count] = 0.0f;
             program.velocity_y_array[count] = 0.0f;
+            program.velocity_z_array[count] = 0.0f;
+            program.locked_index_array[count] = false;
         }
     }
-
-    /*program.vertex_array = (GLfloat*)calloc(sizeof(GLfloat), FLUIDSIZE*FLUIDSIZE*3);
-    program.velocity_x_array = (GLfloat*)calloc(sizeof(GLfloat), FLUIDSIZE*FLUIDSIZE);
-    program.velocity_y_array = (GLfloat*)calloc(sizeof(GLfloat), FLUIDSIZE*FLUIDSIZE);
-    program.density_array = (GLfloat*)calloc(sizeof(GLfloat), FLUIDSIZE*FLUIDSIZE);
-    program.index_array = (GLuint*)calloc(sizeof(GLfloat), FLUIDSIZE*FLUIDSIZE);*/
-
 }
 
 void GLSL::initVBO() {
