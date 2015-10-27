@@ -24,7 +24,9 @@ class Fluid {
     void linSolve( int, float*, float*, float, float );
     void linSolve3D(int, float*, float*, float, float);
     void advect(int, float*, float*, float*, float*);
+    void advect3D(int, float*, float*, float*, float*, float*);
     void project( float*, float*, float*, float* );
+    void project3D(float*, float*, float*, float*, float*);
     void setBnd(int, float*);
     void setBnd3D(int, float*);
 
@@ -96,6 +98,7 @@ void Fluid::update() {
 void Fluid::diffuse( int b, float* x, float* x0, float c ) {
     float a = dt*c*fieldDimension*fieldDimension;
     linSolve( b, x, x0, a, 1+4*a );
+    //linSolve3D(b, x, x0, 1, 1+6*a);
 }
 
 void Fluid::linSolve( int b, float* x, float* x0, float a, float c ) {
@@ -154,7 +157,7 @@ void Fluid::linSolve3D(int b, float* x, float* x0, float a, float c) {
             }
         }
 
-        setBnd(b, x);
+        setBnd3D(b, x);
     }
 }
 
@@ -205,6 +208,73 @@ void Fluid::advect( int b, float* d, float* d0, float* u, float* v ) {
     setBnd(b,d);
 }
 
+void Fluid::advect3D(int b, float* d, float* d0, float* u, float* v, float* w) {
+  float i0, i1, j0, j1, k0, k1;
+
+  float dtx = dt * fieldDimension;
+  float dty = dt * fieldDimension;
+  float dtz = dt * fieldDimension;
+
+  float s0, s1, t0, t1, u0, u1;
+  float tmp1, tmp2, tmp3, x, y, z;
+
+  float Nfloat = FLUIDSIZE+2;
+  float ifloat, jfloat, kfloat;
+  int i, j, k, n = fieldDimension, currentIndex;
+
+  for(k = 1, kfloat = 1; k <= n; k++, kfloat++) {
+      for(j = 1, jfloat = 1; j <= n; j++, jfloat++) {
+          for(i = 1, ifloat = 1; i <= n; i++, ifloat++) {
+              currentIndex = IX3D(i,j,k);
+              tmp1 = dtx * u[currentIndex];
+              tmp2 = dty * v[currentIndex];
+              tmp3 = dtz * w[currentIndex];
+              x    = ifloat - tmp1;
+              y    = jfloat - tmp2;
+              z    = kfloat - tmp3;
+
+              if(x < 0.5f) x = 0.5f;
+              if(x > Nfloat + 0.5f) x = Nfloat + 0.5f;
+              i0 = floorf(x);
+              i1 = i0 + 1.0f;
+              if(y < 0.5f) y = 0.5f;
+              if(y > Nfloat + 0.5f) y = Nfloat + 0.5f;
+              j0 = floorf(y);
+              j1 = j0 + 1.0f;
+              if(z < 0.5f) z = 0.5f;
+              if(z > Nfloat + 0.5f) z = Nfloat + 0.5f;
+              k0 = floorf(z);
+              k1 = k0 + 1.0f;
+
+              s1 = x - i0;
+              s0 = 1.0f - s1;
+              t1 = y - j0;
+              t0 = 1.0f - t1;
+              u1 = z - k0;
+              u0 = 1.0f - u1;
+
+              int i0i = i0;
+              int i1i = i1;
+              int j0i = j0;
+              int j1i = j1;
+              int k0i = k0;
+              int k1i = k1;
+
+              d[currentIndex] =
+                    s0 * ( t0 * (u0 * d0[IX3D(i0i, j0i, k0i)]
+                                +u1 * d0[IX3D(i0i, j0i, k1i)])
+                        +( t1 * (u0 * d0[IX3D(i0i, j1i, k0i)]
+                                +u1 * d0[IX3D(i0i, j1i, k1i)])))
+                   +s1 * ( t0 * (u0 * d0[IX3D(i1i, j0i, k0i)]
+                                +u1 * d0[IX3D(i1i, j0i, k1i)])
+                        +( t1 * (u0 * d0[IX3D(i1i, j1i, k0i)]
+                                +u1 * d0[IX3D(i1i, j1i, k1i)])));
+            }
+        }
+    }
+    setBnd3D(b, d);
+}
+
 void Fluid::project( float* u, float* v, float* p, float* div ) {
     int i, j, k, currentIndex;
     float n = fieldDimension+2;
@@ -237,6 +307,49 @@ void Fluid::project( float* u, float* v, float* p, float* div ) {
 
     setBnd ( 1, u );
     setBnd ( 2, v );
+}
+
+void Fluid::project3D(float* u, float* v, float* w, float* p, float* div) {
+  int currentIndex, n = fieldDimension;
+  for (int k = 1; k <= n; k++) {
+    for (int j = 1; j <= n; j++) {
+      for (int i = 1; i <= n; i++) {
+        currentIndex = IX3D(i,j,k);
+        div[currentIndex] = -0.5f*(
+          u[IX3D(i+1, j, k)]
+          -u[IX3D(i-1, j, k)]
+          +v[IX3D(i, j+1, k)]
+          -v[IX3D(i, j-1, k)]
+          +w[IX3D(i, j, k+1)]
+          -w[IX3D(i, j, k-1)]
+        )/(n+2);
+        p[currentIndex] = 0;
+      }
+    }
+  }
+
+  setBnd3D(0, div);
+  setBnd3D(0, p);
+  linSolve3D(0, p, div, 1, 6);
+
+  for (int k = 1; k <= n; k++) {
+    for (int j = 1; j <= n; j++) {
+      for (int i = 1; i <= n; i++) {
+        currentIndex = IX3D(i,j,k);
+
+        u[currentIndex] -= 0.5f * (  p[IX3D(i+1, j, k)]
+          -p[IX3D(i-1, j, k)]) * (n+2);
+        v[currentIndex] -= 0.5f * (  p[IX3D(i, j+1, k)]
+          -p[IX3D(i, j-1, k)]) * (n+2);
+        w[currentIndex] -= 0.5f * (  p[IX3D(i, j, k+1)]
+          -p[IX3D(i, j, k-1)]) * (n+2);
+      }
+    }
+  }
+
+  setBnd3D(1, u);
+  setBnd3D(2, v);
+  setBnd3D(3, w);
 }
 
 void Fluid::setBnd(int b, float* x) {
