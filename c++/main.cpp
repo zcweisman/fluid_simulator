@@ -7,12 +7,14 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <iostream>
 #include <string>
 #include <stdio.h>
 
-#define FLUIDSIZE 150
+#define FLUIDSIZE 50
 
 #include "structs.h"
 
@@ -29,6 +31,7 @@ static void error_callback( int, const char* );
 static void cursor_position_callback( GLFWwindow*, double, double );
 static void mouse_click_callback( GLFWwindow*, int, int, int );
 
+#include "camera.hpp"
 #include "glsl.hpp"
 #include "environment.hpp"
 
@@ -65,6 +68,8 @@ int main( void ) {
     glfwSetCursorPosCallback(window, cursor_position_callback);
     glfwSetMouseButtonCallback(window, mouse_click_callback);
 
+    //Camera camera((float)glfwGetTime(), windowWidth, windowHeight);
+
     glewExperimental = GL_TRUE;
     if ( glewInit() != GLEW_OK ) {
         fprintf( stderr, "Failed to initialize GLEW\n" );
@@ -94,34 +99,26 @@ int main( void ) {
     GLSL::initArrays();
     GLSL::initVBO();
 
-    /*field->addDensity( 1, 23, 23 );
-    field->addDensity( 1, 25, 23 );
-    field->addDensity( 1, 26, 23 );
-    field->addDensity( 1, 27, 23 );
-    field->addDensity( 1, 24, 26 );
-    field->addDensity( 1, 25, 26 );
-    field->addDensity( 1, 26, 26 );
-    field->addDensity( 1, 27, 26 );
-    field->addDensity( 1, 24, 24 );
-    field->addDensity( 1, 27, 24 );
-    field->addDensity( 1, 24, 25 );
-    field->addDensity( 1, 27, 25 );
-
-    field->addVelocity( 0, 5, 25, 25 );
-    field->addVelocity( 5, -5, 26, 24 );
-    field->addVelocity(-5, -5, 25, 24 );
-    field->addVelocity( 5, 5, 26, 26 );*/
-
     //Environment::addObstacle();
 
-    glEnable( GL_PROGRAM_POINT_SIZE );
+    glEnable(GL_PROGRAM_POINT_SIZE);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glDepthMask(GL_TRUE);
 
     //General framecount variable
     int count = 0;
+    glm::mat4 view = glm::mat4(1.f);
+    glm::mat4 projection = glm::perspective(80.f, 1.f, 0.1f, 100.f);
+    glm::mat4 scale = glm::scale(glm::mat4(1.f), glm::vec3(0.25f, 0.25f, 0.25f));
+    glm::mat4 rotate = glm::rotate(glm::mat4(1.f), 20.f, glm::vec3(0.f, 1.f, 0.f));
+    glm::mat4 translate = glm::translate(glm::mat4(1.f), glm::vec3(0.25f, 0.f, -0.5f));
+    glm::mat4 model = translate*scale*rotate;
 
     while ( !glfwWindowShouldClose( window ) ) {
         //Pass the simulator system updates
-        glClear( GL_COLOR_BUFFER_BIT );
+        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_DEPTH_BUFFER_BIT);
         glUseProgram( program.program );
 
         //Camera::update();
@@ -173,7 +170,9 @@ int main( void ) {
         //Bind the index array
         glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, program.ibo );
         glUniform1i( program.uniform_size, FLUIDSIZE );
-        //Transformations here
+        glUniformMatrix4fv(program.uniform_proj_matrix, 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(program.uniform_view_matrix, 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(program.uniform_model_matrix, 1, GL_FALSE, glm::value_ptr(model));
 
         assert(glGetError() == GL_NO_ERROR);
         glDrawElements( GL_POINTS, FLUIDSIZE*FLUIDSIZE, GL_UNSIGNED_INT, 0 );

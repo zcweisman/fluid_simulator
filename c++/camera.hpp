@@ -5,8 +5,8 @@
 
 class Camera {
 private:
-    float last;
-    float current;
+    float lst;
+    float cur;
 
     float cpx;
     float cpy;
@@ -32,7 +32,7 @@ public:
     glm::mat4 getViewMatrix();
     glm::vec3 getPosition();
 
-    void setFOV(float);
+    void setFovy(float);
     void setNearZ(float);
     void setFarZ(float);
     void setPosition(glm::vec3);
@@ -40,7 +40,7 @@ public:
     void setUpAngle(glm::vec3);
 
     void update(float, float, float, bool*);
-}
+};
 
 Camera::Camera(float start, float width, float height) {
     wdt = width;
@@ -61,11 +61,12 @@ Camera::Camera(float start, float width, float height) {
 
 void Camera::update(float time, float cursorX, float cursorY, bool* keys) {
     cur = time;
-    float tDif = cur-last;
+    float tDif = cur-lst;
 
     glm::vec2 dv = glm::vec2(cursorX-cpx, cursorY-cpy);
     rot -= rfa*dv;
-    glm::mat4 R = glm::rotate(rot.x, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::rotate(rot.y, glm::vec3(1.0, 0.0f, 0.0f));
+    glm::mat4 R = glm::rotate(glm::mat4(1.0f), rot.x, glm::vec3(0.0f, 1.0f, 0.0f))
+     * glm::rotate(glm::mat4(1.0f), rot.y, glm::vec3(1.0, 0.0f, 0.0f));
     glm::vec3 RZ = glm::vec3(R[2][0], R[2][1], R[2][2]);
     glm::vec3 RX = glm::vec3(R[0][0], R[0][1], R[0][2]);
 
@@ -77,7 +78,7 @@ void Camera::update(float time, float cursorX, float cursorY, bool* keys) {
     lst = cur;
 
     cpx = cursorX;
-    cpy = cursorY;kllll
+    cpy = cursorY;
 }
 
 glm::mat4 Camera::getProjectionMatrix() {
@@ -85,9 +86,9 @@ glm::mat4 Camera::getProjectionMatrix() {
 }
 
 glm::mat4 Camera::getViewMatrix() {
-    glm::mat4 T = glm::translate(eye);
-    glm::mat4 R = glm::rotate(rot.x, glm::vec3(0.0f, 1.0f, 0.0f))*
-        glm::rotate(rot.y, glm::vec3(1.0f,0.0f,0.0f));
+    glm::mat4 T = glm::translate(glm::mat4(1.0f), eye);
+    glm::mat4 R = glm::rotate(glm::mat4(1.0f),rot.x, glm::vec3(0.0f, 1.0f, 0.0f))*
+        glm::rotate(glm::mat4(1.0f), rot.y, glm::vec3(1.0f,0.0f,0.0f));
 
     glm::mat4 C = T*R;
     return glm::inverse(C);

@@ -116,8 +116,21 @@ void GLSL::initShaderVars() {
     program.attribute_velocity_y = glGetAttribLocation(
         program.program, "vertex_velocity_y"
     );
+    /*program.attribute_velocity_z = glGetAttribLocation(
+      program.program, "vertex_velocity_z"
+    );*/
     std::cout << "Y Velocity Attribute Shader Address: " << program.attribute_velocity_y
         << std::endl;
+
+    program.uniform_view_matrix = glGetUniformLocation(
+      program.program, "view_matrix"
+    );
+    program.uniform_proj_matrix = glGetUniformLocation(
+      program.program, "proj_matrix"
+    );
+    program.uniform_model_matrix = glGetUniformLocation(
+      program.program, "model_matrix"
+    );
     program.uniform_size = glGetUniformLocation(
         program.program, "field_dimension"
     );
@@ -196,6 +209,12 @@ void GLSL::initVBO() {
     glBindBuffer( GL_ARRAY_BUFFER, program.velybo );
     glBufferData( GL_ARRAY_BUFFER, sizeof( program.velocity_y_array ),
         program.velocity_y_array, GL_STATIC_DRAW );
+
+    /*glGenBuffers( 1, &(program.velzbo) );
+    std::cout << "VELBO Address: " << program.velzbo << std::endl;
+    glBindBuffer( GL_ARRAY_BUFFER, program.velzbo );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( program.velocity_z_array ),
+        program.velocity_y_array, GL_STATIC_DRAW );*/
 
      // Initialize index array
     glGenBuffers( 1, &(program.ibo) );
