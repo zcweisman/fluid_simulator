@@ -86,13 +86,27 @@ void Fluid::update() {
 
     project ( vx0, vy0, vx, vy );
 
-    advect ( 2, vx, vx0, vx0, vy0 );
-    advect ( 1, vy, vy0, vx0, vy0 );
+    advect ( 1, vx, vx0, vx0, vy0 );
+    advect ( 2, vy, vy0, vx0, vy0 );
 
     project ( vx, vy, vx0, vy0 );
 
     diffuse ( 0, s, dens, diffusion );
     advect ( 0, dens, s, vx, vy );
+    /*diffuse(1, vx0, vx, viscosity);
+    diffuse(2, vy0, vy, viscosity);
+    diffuse(3, vz0, vz, viscosity);
+
+    project3D (vx0, vy0, vz0, vx, vy);
+
+    advect3D(1, vx, vx0, vx0, vy0, vz0);
+    advect3D(2, vy, vy0, vx0, vy0, vz0);
+    advect3D(3, vz, vz0, vx0, vy0, vz0);
+
+    project3D(vx, vy, vz, vx0, vy0);
+
+    diffuse(0, s, dens, diffusion);
+    advect3D(0, dens, s, vx, vy, vz);*/
 }
 
 void Fluid::diffuse( int b, float* x, float* x0, float c ) {
@@ -364,11 +378,6 @@ void Fluid::setBnd(int b, float* x) {
         x[IX3D(i,0,0)] = b == 2 ? -x[IX3D(i,1,0)] : x[IX3D(i,1,0)];
         x[IX3D(i,n+1,0)] = b == 2 ? -x[IX3D(i,n,0)] : x[IX3D(i,n,0)];
     }
-
-    /*for ( i = 1; i <= fieldDimension; i++ ) {
-        x[IX3D(i,0,0)] = b == 3 ? -x[IX3D(i,1,0)] : x[IX3D(i,1,0)];
-        x[IX3D(i,n+1,0)] = b == 3 ? -x[IX3D(i,n,0)] : x[IX3D(i,n,0)];
-    }*/
 
     x[IX3D(0, 0,0)] = 0.5f*(x[IX3D(1, 0,0)] + x[IX3D(0, 1,0)]);
     x[IX3D(0, n+1,0)] = 0.5f*(x[IX3D(1, n+1,0)] + x[IX3D(0, n,0)]);

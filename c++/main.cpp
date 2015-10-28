@@ -125,25 +125,24 @@ int main( void ) {
          object.velocityXPos, object.velocityYPos, 0 );
         field->addDensity( object.densityAmount, object.densityXPos,
          object.densityYPos, 0 );
-         field->addDensity( 255, 23, 23, 0 );
-         field->addDensity( 255, 25, 23, 0 );
-         field->addDensity( 255, 26, 23, 0 );
-         field->addDensity( 255, 27, 23, 0 );
-         field->addDensity( 255, 24, 26, 0 );
-         field->addDensity( 255, 25, 26, 0 );
-         field->addDensity( 255, 26, 26, 0 );
-         field->addDensity( 255, 27, 26, 0 );
-         field->addDensity( 255, 24, 24, 0 );
-         field->addDensity( 255, 27, 24, 0 );
-         field->addDensity( 255, 24, 25, 0 );
-         field->addDensity( 255, 27, 25, 0 );
+        field->addDensity( 255, 23, 23, 0 );
+        field->addDensity( 255, 25, 23, 0 );
+        field->addDensity( 255, 26, 23, 0 );
+        field->addDensity( 255, 27, 23, 0 );
+        field->addDensity( 255, 24, 26, 0 );
+        field->addDensity( 255, 25, 26, 0 );
+        field->addDensity( 255, 26, 26, 0 );
+        field->addDensity( 255, 27, 26, 0 );
+        field->addDensity( 255, 24, 24, 0 );
+        field->addDensity( 255, 27, 24, 0 );
+        field->addDensity( 255, 24, 25, 0 );
+        field->addDensity( 255, 27, 25, 0 );
 
-         field->addVelocity( -100, 100, 0, 25, 25, 0 );
-         field->addVelocity( 100, -100, 0, 26, 24, 0 );
-         field->addVelocity(-100, -100, 0, 25, 24, 0 );
-         field->addVelocity( 100, 100, 0, 26, 26, 0 );
+        field->addVelocity( -100, 100, 0, 25, 25, 0 );
+        field->addVelocity( 100, -100, 0, 26, 24, 0 );
+        field->addVelocity(-100, -100, 0, 25, 24, 0 );
+        field->addVelocity( 100, 100, 0, 26, 26, 0 );
         field->update();
-        //field->printDensityArray();
 
         GLSL::bufferData(field);
 
@@ -174,7 +173,7 @@ int main( void ) {
         glUniformMatrix4fv(program.uniform_model_matrix, 1, GL_FALSE, glm::value_ptr(model));
 
         assert(glGetError() == GL_NO_ERROR);
-        glDrawElements( GL_POINTS, FLUIDSIZE*FLUIDSIZE, GL_UNSIGNED_INT, 0 );
+        glDrawElements( GL_POINTS, FLUIDSIZE*FLUIDSIZE*FLUIDSIZE, GL_UNSIGNED_INT, 0 );
         assert(glGetError() == GL_NO_ERROR);
 
         glDisableVertexAttribArray( program.attribute_vertex );

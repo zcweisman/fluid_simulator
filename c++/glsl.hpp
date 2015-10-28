@@ -7,8 +7,6 @@
 #ifndef _GLSL_HPP_
 #define _GLSL_HPP_
 
-#define IX2DNOBUF(x,y) ((x) + FLUIDSIZE*(y))
-
 namespace GLSL {
     GLuint  loadShaders( const std::string&, const std::string& ); //Done
     void    initShaderVars();                           //Done
@@ -116,9 +114,9 @@ void GLSL::initShaderVars() {
     program.attribute_velocity_y = glGetAttribLocation(
         program.program, "vertex_velocity_y"
     );
-    /*program.attribute_velocity_z = glGetAttribLocation(
+    program.attribute_velocity_z = glGetAttribLocation(
       program.program, "vertex_velocity_z"
-    );*/
+    );
     std::cout << "Y Velocity Attribute Shader Address: " << program.attribute_velocity_y
         << std::endl;
 
@@ -160,23 +158,21 @@ char* GLSL::textFileRead( const char* fn ) {
 }
 
 void GLSL::initArrays() {
-    int i, j, k;
     GLuint count = 0;
 
-    /*for ( k = 0.0f; k < FLUIDSIZE; k++ ) {
-        ;
-    }*/
-    for ( j = 0.0f; j < FLUIDSIZE; j++ ) {
-        for ( i = 0.0f; i < FLUIDSIZE; i++, count++ ) {
-            program.vertex_array[count*3] = (GLfloat)((i+1.0f-0.5f)/FLUIDSIZE);
-            program.vertex_array[count*3+1] = (GLfloat)((j+1.0f-0.5f)/FLUIDSIZE);
-            program.vertex_array[count*3+2] = (GLfloat)0.0f;
-            program.index_array[count] = count; //Simply references the current
-            program.density_array[count] = 0.0f;
-            program.velocity_x_array[count] = 0.0f;
-            program.velocity_y_array[count] = 0.0f;
-            program.velocity_z_array[count] = 0.0f;
-            program.locked_index_array[count] = false;
+    for (int k = 0; k < FLUIDSIZE; k++) {
+        for (int j = 0; j < FLUIDSIZE; j++ ) {
+            for (int i = 0; i < FLUIDSIZE; i++, count++ ) {
+                program.vertex_array[count*3] = (GLfloat)((i+1.0f-0.5f)/FLUIDSIZE);
+                program.vertex_array[count*3+1] = (GLfloat)((j+1.0f-0.5f)/FLUIDSIZE);
+                program.vertex_array[count*3+2] = (GLfloat)((k+1.f-0.5f)/FLUIDSIZE);
+                program.index_array[count] = count; //Simply references the current
+                program.density_array[count] = 0.0f;
+                program.velocity_x_array[count] = 0.0f;
+                program.velocity_y_array[count] = 0.0f;
+                program.velocity_z_array[count] = 0.0f;
+                program.locked_index_array[count] = false;
+            }
         }
     }
 }
@@ -210,11 +206,11 @@ void GLSL::initVBO() {
     glBufferData( GL_ARRAY_BUFFER, sizeof( program.velocity_y_array ),
         program.velocity_y_array, GL_STATIC_DRAW );
 
-    /*glGenBuffers( 1, &(program.velzbo) );
+    glGenBuffers( 1, &(program.velzbo) );
     std::cout << "VELBO Address: " << program.velzbo << std::endl;
     glBindBuffer( GL_ARRAY_BUFFER, program.velzbo );
     glBufferData( GL_ARRAY_BUFFER, sizeof( program.velocity_z_array ),
-        program.velocity_y_array, GL_STATIC_DRAW );*/
+        program.velocity_y_array, GL_STATIC_DRAW );
 
      // Initialize index array
     glGenBuffers( 1, &(program.ibo) );
@@ -231,14 +227,19 @@ void GLSL::initVBO() {
 void GLSL::bufferData(Fluid* field) {
     float* vx = field->getXVelocity();
     float* vy = field->getYVelocity();
+    float* vz = field->getZVelocity();
     float* d = field->getDensity();
-    int i, j, count = 0;
+    int i, j, k, count = 0, currentIndex;
 
-    for ( j = 1; j <= FLUIDSIZE; j++ ) {
-        for ( i = 1; i <= FLUIDSIZE; i++, count++ ) {
-            program.velocity_x_array[count] = vx[IX2D(i,j)];
-            program.velocity_y_array[count] = vy[IX2D(i,j)];
-            program.density_array[count] = d[IX2D(i,j)];
+    for (k = 1; k <= FLUIDSIZE; k++) {
+        for ( j = 1; j <= FLUIDSIZE; j++ ) {
+            for ( i = 1; i <= FLUIDSIZE; i++, count++ ) {
+                currentIndex = IX3D(i,j,0);
+                program.velocity_x_array[count] = vx[currentIndex];
+                program.velocity_y_array[count] = vy[currentIndex];
+                program.velocity_z_array[count] = vz[currentIndex];
+                program.density_array[count] = d[currentIndex];
+            }
         }
     }
 
@@ -253,6 +254,10 @@ void GLSL::bufferData(Fluid* field) {
     glBindBuffer( GL_ARRAY_BUFFER, program.velybo );
     glBufferData( GL_ARRAY_BUFFER, sizeof( program.velocity_y_array ),
         program.velocity_y_array, GL_STATIC_DRAW );
+
+    glBindBuffer( GL_ARRAY_BUFFER, program.velzbo );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( program.velocity_z_array ),
+        program.velocity_z_array, GL_STATIC_DRAW );
 }
 
 #endif

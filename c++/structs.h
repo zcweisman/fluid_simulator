@@ -7,7 +7,7 @@ typedef struct Program {
     GLuint      program;
 
     // Vertex arrays
-    GLfloat     vertex_array[FLUIDSIZE*FLUIDSIZE*3];
+    GLfloat     vertex_array[FLUIDSIZE*FLUIDSIZE*FLUIDSIZE*3];
     GLfloat     velocity_x_array[FLUIDSIZE*FLUIDSIZE*FLUIDSIZE];
     GLfloat     velocity_y_array[FLUIDSIZE*FLUIDSIZE*FLUIDSIZE];
     GLfloat     velocity_z_array[FLUIDSIZE*FLUIDSIZE*FLUIDSIZE];
