@@ -111,14 +111,13 @@ int main( void ) {
     glm::mat4 view = glm::mat4(1.f);
     glm::mat4 projection = glm::perspective(80.f, 1.f, 0.1f, 100.f);
     glm::mat4 scale = glm::scale(glm::mat4(1.f), glm::vec3(0.25f, 0.25f, 0.25f));
-    glm::mat4 rotate = glm::rotate(glm::mat4(1.f), 20.f, glm::vec3(0.f, 1.f, 0.f));
-    glm::mat4 translate = glm::translate(glm::mat4(1.f), glm::vec3(0.25f, 0.f, -0.5f));
+    glm::mat4 rotate = glm::rotate(glm::mat4(1.f), 50.f, glm::vec3(0.f, 1.f, 0.f));
+    glm::mat4 translate = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, -0.5f));
     glm::mat4 model = translate*scale*rotate;
 
     while ( !glfwWindowShouldClose( window ) ) {
         //Pass the simulator system updates
-        glClear(GL_COLOR_BUFFER_BIT);
-        glClear(GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glUseProgram( program.program );
 
         //Camera::update();
