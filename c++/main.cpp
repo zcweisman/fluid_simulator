@@ -116,33 +116,33 @@ int main( void ) {
     glm::mat4 rotate;
     glm::mat4 model;
 
-    while ( !glfwWindowShouldClose( window ) ) {
+    while (!glfwWindowShouldClose(window)) {
         //Pass the simulator system updates
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glUseProgram( program.program );
 
         //Camera::update();
         field->addVelocity( object.velocityXAmount, object.velocityYAmount, 0,
-         object.velocityXPos, object.velocityYPos, 0 );
+         object.velocityXPos, object.velocityYPos, 1 );
         field->addDensity( object.densityAmount, object.densityXPos,
-         object.densityYPos, 0 );
-        field->addDensity( 255, 23, 23, 0 );
-        field->addDensity( 255, 25, 23, 0 );
-        field->addDensity( 255, 26, 23, 0 );
-        field->addDensity( 255, 27, 23, 0 );
-        field->addDensity( 255, 24, 26, 0 );
-        field->addDensity( 255, 25, 26, 0 );
-        field->addDensity( 255, 26, 26, 0 );
-        field->addDensity( 255, 27, 26, 0 );
-        field->addDensity( 255, 24, 24, 0 );
-        field->addDensity( 255, 27, 24, 0 );
-        field->addDensity( 255, 24, 25, 0 );
-        field->addDensity( 255, 27, 25, 0 );
+         object.densityYPos, 1 );
+        field->addDensity( 255, 23, 23, 1 );
+        field->addDensity( 255, 25, 23, 1 );
+        field->addDensity( 255, 26, 23, 1 );
+        field->addDensity( 255, 27, 23, 1 );
+        field->addDensity( 255, 24, 26, 1 );
+        field->addDensity( 255, 25, 26, 1 );
+        field->addDensity( 255, 26, 26, 1 );
+        field->addDensity( 255, 27, 26, 1 );
+        field->addDensity( 255, 24, 24, 1 );
+        field->addDensity( 255, 27, 24, 1 );
+        field->addDensity( 255, 24, 25, 1 );
+        field->addDensity( 255, 27, 25, 1 );
 
-        field->addVelocity( -100, 100, 0, 25, 25, 0 );
-        field->addVelocity( 100, -100, 0, 26, 24, 0 );
-        field->addVelocity(-100, -100, 0, 25, 24, 0 );
-        field->addVelocity( 100, 100, 0, 26, 26, 0 );
+        field->addVelocity( -100, 100, 0, 25, 25, 1 );
+        field->addVelocity( 100, -100, 0, 26, 24, 1 );
+        field->addVelocity(-100, -100, 0, 25, 24, 1 );
+        field->addVelocity( 100, 100, 0, 26, 26, 1 );
         field->update();
 
         GLSL::bufferData(field);
@@ -185,7 +185,7 @@ int main( void ) {
         glDisableVertexAttribArray(program.attribute_velocity_x);
         glDisableVertexAttribArray(program.attribute_velocity_y);
         glDisableVertexAttribArray(program.attribute_velocity_z);
-        
+
         glBindBuffer( GL_ARRAY_BUFFER, 0 );
         glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
         glUseProgram ( 0 );

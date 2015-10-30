@@ -234,7 +234,7 @@ void GLSL::bufferData(Fluid* field) {
     for (k = 1; k <= FLUIDSIZE; k++) {
         for ( j = 1; j <= FLUIDSIZE; j++ ) {
             for ( i = 1; i <= FLUIDSIZE; i++, count++ ) {
-                currentIndex = IX3D(i,j,0);
+                currentIndex = IX3D(i,j,1);
                 program.velocity_x_array[count] = vx[currentIndex];
                 program.velocity_y_array[count] = vy[currentIndex];
                 program.velocity_z_array[count] = vz[currentIndex];
