@@ -30,6 +30,7 @@ static void key_callback( GLFWwindow*, int, int, int, int );
 static void error_callback( int, const char* );
 static void cursor_position_callback( GLFWwindow*, double, double );
 static void mouse_click_callback( GLFWwindow*, int, int, int );
+static float angle = 0;
 
 #include "camera.hpp"
 #include "glsl.hpp"
@@ -111,9 +112,9 @@ int main( void ) {
     glm::mat4 view = glm::mat4(1.f);
     glm::mat4 projection = glm::perspective(80.f, 1.f, 0.1f, 100.f);
     glm::mat4 scale = glm::scale(glm::mat4(1.f), glm::vec3(0.25f, 0.25f, 0.25f));
-    glm::mat4 rotate = glm::rotate(glm::mat4(1.f), 50.f, glm::vec3(0.f, 1.f, 0.f));
     glm::mat4 translate = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, -0.5f));
-    glm::mat4 model = translate*scale*rotate;
+    glm::mat4 rotate;
+    glm::mat4 model;
 
     while ( !glfwWindowShouldClose( window ) ) {
         //Pass the simulator system updates
@@ -165,6 +166,9 @@ int main( void ) {
         glBindBuffer( GL_ARRAY_BUFFER, program.velybo );
         glVertexAttribPointer( program.attribute_velocity_y, 1, GL_FLOAT, GL_FALSE, 0, (void*)0 ); //Problem
 
+        rotate = glm::rotate(glm::mat4(1.f), angle, glm::vec3(0.f, 1.f, 0.f));
+        model = translate*scale*rotate;
+
         //Bind the index array
         glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, program.ibo );
         glUniform1i( program.uniform_size, FLUIDSIZE );
@@ -176,10 +180,12 @@ int main( void ) {
         glDrawElements( GL_POINTS, FLUIDSIZE*FLUIDSIZE*FLUIDSIZE, GL_UNSIGNED_INT, 0 );
         assert(glGetError() == GL_NO_ERROR);
 
-        glDisableVertexAttribArray( program.attribute_vertex );
-        glDisableVertexAttribArray( program.attribute_density );
-        glDisableVertexAttribArray( program.attribute_velocity_x );
-        glDisableVertexAttribArray( program.attribute_velocity_y );
+        glDisableVertexAttribArray(program.attribute_vertex);
+        glDisableVertexAttribArray(program.attribute_density);
+        glDisableVertexAttribArray(program.attribute_velocity_x);
+        glDisableVertexAttribArray(program.attribute_velocity_y);
+        glDisableVertexAttribArray(program.attribute_velocity_z);
+        
         glBindBuffer( GL_ARRAY_BUFFER, 0 );
         glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
         glUseProgram ( 0 );
@@ -187,11 +193,12 @@ int main( void ) {
         glfwPollEvents();
     }
 
-    glDeleteBuffers( 1, &program.vbo );
-    glDeleteBuffers( 1, &program.ibo );
-    glDeleteBuffers( 1, &program.velxbo );
-    glDeleteBuffers( 1, &program.velybo );
-    glDeleteBuffers( 1, &program.dbo );
+    glDeleteBuffers(1, &program.vbo);
+    glDeleteBuffers(1, &program.ibo);
+    glDeleteBuffers(1, &program.velxbo);
+    glDeleteBuffers(1, &program.velybo);
+    glDeleteBuffers(1, &program.velzbo);
+    glDeleteBuffers(1, &program.dbo);
 
     glfwTerminate();
     delete field;
@@ -201,8 +208,8 @@ int main( void ) {
 
 static void key_callback(GLFWwindow* window, int key, int scancode,
 int action, int mods) {
-            ;
-            //So far nothing for key press.
+            if (key == GLFW_KEY_A) angle -= 2.5f;
+            if (key == GLFW_KEY_D) angle += 2.5f;
 }
 
 static void error_callback(int error, const char* description) {
@@ -220,14 +227,11 @@ static void cursor_position_callback( GLFWwindow* w, double x, double y ) {
         static double x0 = 0;
         static double y0 = 0;
 
-        //object.velocityXAmount = dx/FLUIDSIZE;
-        //object.velocityYAmount = dy/FLUIDSIZE;
         object.velocityXAmount = (x - x0);
         object.velocityYAmount = (realY - y0);
         x0 = x;
         y0 = realY;
-        //std::cout << "Velocity X: " << object.velocityXAmount << std::endl;
-        //std::cout << "Velocity y: " << object.velocityYAmount << std::endl;
+
         object.velocityXPos = object.mouseXPos; // Need to translate this to object space
         object.velocityYPos = object.mouseYPos;
 
@@ -235,22 +239,6 @@ static void cursor_position_callback( GLFWwindow* w, double x, double y ) {
         object.densityXPos = object.mouseXPos;
         object.densityYPos = object.mouseYPos;
     } else {
-        /*double dx = object.mouseXPos - object.mouseXPos0;
-        double dy = object.mouseYPos - object.mouseYPos0;
-        static double x0 = 0;
-        static double y0 = 0;
-
-        //object.velocityXAmount = dx/FLUIDSIZE;
-        //object.velocityYAmount = dy/FLUIDSIZE;
-        object.velocityXAmount = (x - x0);
-        object.velocityYAmount = (realY - y0);
-        x0 = x;
-        y0 = realY;
-        //std::cout << "Velocity X: " << object.velocityXAmount << std::endl;
-        //std::cout << "Velocity y: " << object.velocityYAmount << std::endl;
-        object.velocityXPos = object.mouseXPos; // Need to translate this to object space
-        object.velocityYPos = object.mouseYPos;*/
-        /**/
         object.densityAmount = 0;
         object.densityXPos = object.mouseXPos;
         object.densityYPos = object.mouseYPos;
@@ -258,8 +246,6 @@ static void cursor_position_callback( GLFWwindow* w, double x, double y ) {
 
     object.mouseXPos0 = object.mouseXPos;
     object.mouseYPos0 = object.mouseYPos;
-
-    //std::cout << object.mouseXPos << ", " << object.mouseYPos << std::endl;
 
     return;
 }
