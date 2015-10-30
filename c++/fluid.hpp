@@ -17,7 +17,7 @@
 class Fluid {
     float *vx, *vy, *vz, *vx0, *vy0, *vz0, *dens, *s;
     float diffusion, viscosity, dt;
-    short fieldDimension, fieldArraySize;
+    unsigned int fieldDimension, fieldArraySize;
     char iterations;
 
     void diffuse(int, float*, float*, float);
@@ -55,18 +55,16 @@ public:
 
 Fluid::Fluid(short field, short window) {
     fieldDimension = field;
-    fieldArraySize = pow(fieldDimension+2, 2);
-    int fieldArraySizeTwo;
-    fieldArraySizeTwo = pow(fieldDimension+2, 3);
+    fieldArraySize = pow(fieldDimension+2, 3);
 
-    s           = (float*)calloc( fieldArraySizeTwo, sizeof(GLfloat) );
-    vx          = (float*)calloc( fieldArraySizeTwo, sizeof(GLfloat) );
-    vy          = (float*)calloc( fieldArraySizeTwo, sizeof(GLfloat) );
-    vz          = (float*)calloc( fieldArraySizeTwo, sizeof(GLfloat) );
-    vx0         = (float*)calloc( fieldArraySizeTwo, sizeof(GLfloat) );
-    vy0         = (float*)calloc( fieldArraySizeTwo, sizeof(GLfloat) );
-    vz0         = (float*)calloc( fieldArraySizeTwo, sizeof(GLfloat) );
-    dens        = (float*)calloc( fieldArraySizeTwo, sizeof(GLfloat) );
+    s           = (float*)calloc( fieldArraySize, sizeof(GLfloat) );
+    vx          = (float*)calloc( fieldArraySize, sizeof(GLfloat) );
+    vy          = (float*)calloc( fieldArraySize, sizeof(GLfloat) );
+    vz          = (float*)calloc( fieldArraySize, sizeof(GLfloat) );
+    vx0         = (float*)calloc( fieldArraySize, sizeof(GLfloat) );
+    vy0         = (float*)calloc( fieldArraySize, sizeof(GLfloat) );
+    vz0         = (float*)calloc( fieldArraySize, sizeof(GLfloat) );
+    dens        = (float*)calloc( fieldArraySize, sizeof(GLfloat) );
 }
 
 Fluid::~Fluid() {
@@ -387,22 +385,25 @@ void Fluid::setBnd(int b, float* x) {
 
 void Fluid::setBnd3D(int b, float* x) {
     int n = fieldDimension;
-    for(int j = 1; j <= n; j++) {
-        for(int i = 1; i <= n; i++) {
-            x[IX3D(i, j, 0  )] = b == 3 ? -x[IX3D(i, j, 1  )] : x[IX3D(i, j, 1  )];
-            x[IX3D(i, j, n+1)] = b == 3 ? -x[IX3D(i, j, n)] : x[IX3D(i, j, n)];
+
+    for(int k = 1; k <= n; k++) {
+        for(int j = 1; j <= n; j++) {
+            x[IX3D(0, j, k)] = b == 1 ? -x[IX3D(1, j, k)] : x[IX3D(1, j, k)];
+            x[IX3D(n+1, j, k)] = b == 1 ? -x[IX3D(n, j, k)] : x[IX3D(n, j, k)];
         }
     }
+
     for(int k = 1; k <= n; k++) {
         for(int i = 1; i <= n; i++) {
             x[IX3D(i, 0  , k)] = b == 2 ? -x[IX3D(i, 1  , k)] : x[IX3D(i, 1  , k)];
             x[IX3D(i, n+1, k)] = b == 2 ? -x[IX3D(i, n, k)] : x[IX3D(i, n, k)];
         }
     }
-    for(int k = 1; k <= n; k++) {
-        for(int j = 1; j <= n; j++) {
-            x[IX3D(0, j, k)] = b == 1 ? -x[IX3D(1, j, k)] : x[IX3D(1, j, k)];
-            x[IX3D(n+1, j, k)] = b == 1 ? -x[IX3D(n, j, k)] : x[IX3D(n, j, k)];
+
+    for(int j = 1; j <= n; j++) {
+        for(int i = 1; i <= n; i++) {
+            x[IX3D(i, j, 0  )] = b == 3 ? -x[IX3D(i, j, 1  )] : x[IX3D(i, j, 1  )];
+            x[IX3D(i, j, n+1)] = b == 3 ? -x[IX3D(i, j, n)] : x[IX3D(i, j, n)];
         }
     }
 
