@@ -48,9 +48,6 @@ public:
     float*  getXVelocity();
     float*  getYVelocity();
     float*  getZVelocity();
-
-    void    printDensityArray();
-    void    printVelocityArray();
 };
 
 Fluid::Fluid(short field, short window) {
@@ -169,14 +166,11 @@ void Fluid::linSolve3D(int b, float* x, float* x0, float a, float c) {
     static int count = 0;
     static float highest = 0.0f;
 
-    // /fprintf(stderr, "------------- c: %f, cRecip: %f, a: %f --------------\n", c, cRecip, a);
-
     for (int m = 0; m < iterations; m++) {
         for (int k = 1; k <= fieldDimension; k++) {
             for (int j = 1; j <= fieldDimension; j++) {
                 for (int i = 1; i <= fieldDimension; i++) {
                     currentIndex = IX3D(i,j,k);
-                    //fprintf(stderr, "Indices: %d, %d, %d\n", i, j, k);
                         x[currentIndex] = (x0[currentIndex] +
                           a*(x[IX3D(i+1, j, k)]
                             + x[IX3D(i-1, j, k)]
@@ -189,7 +183,6 @@ void Fluid::linSolve3D(int b, float* x, float* x0, float a, float c) {
                 }
             }
         }
-        //fprintf(stderr, "Before setBnd3D: %f\n", highest);
         setBnd3D(b, x);
     }
 }
@@ -267,7 +260,6 @@ void Fluid::advect3D(int b, float* d, float* d0, float* u, float* v, float* w) {
   float ifloat, jfloat, kfloat;
   int i, j, k, n = fieldDimension, currentIndex;
 
-  fprintf(stderr, "Enter loops\n");
   for(k = 1, kfloat = 1; k <= n; k++, kfloat++) {
       for(j = 1, jfloat = 1; j <= n; j++, jfloat++) {
           for(i = 1, ifloat = 1; i <= n; i++, ifloat++) {
@@ -329,18 +321,7 @@ void Fluid::advect3D(int b, float* d, float* d0, float* u, float* v, float* w) {
                 if (k1i < 0) j1 = 0;
                 if (k1i > FLUIDSIZE) k1i = FLUIDSIZE;
 
-
-                //fprintf(stderr, "i0i: %d, i1i: %d, j0i: %d, j1i: %d, k0i: %d, k1i: %d\n",
-                //  i0i, i1i, j0i, j1i, k0i, k1i);
                 d[currentIndex] =
-                /*s0 * ( t0 * (u0 * d0[IX3D(i0i, j0i, 1)]
-                +u1 * d0[IX3D(i0i, j0i, 1)])
-                +( t1 * (u0 * d0[IX3D(i0i, j1i, 1)]
-                +u1 * d0[IX3D(i0i, j1i, 1)])))
-                +s1 * ( t0 * (u0 * d0[IX3D(i1i, j0i, 1)]
-                +u1 * d0[IX3D(i1i, j0i, 1)])
-                +( t1 * (u0 * d0[IX3D(i1i, j1i, 1)]
-                +u1 * d0[IX3D(i1i, j1i, 1)])));*/
                 s0 * ( t0 * (u0 * d0[IX3D(i0i, j0i, k0i)]
                 +u1 * d0[IX3D(i0i, j0i, k1i)])
                 +( t1 * (u0 * d0[IX3D(i0i, j1i, k0i)]
@@ -349,11 +330,9 @@ void Fluid::advect3D(int b, float* d, float* d0, float* u, float* v, float* w) {
                 +u1 * d0[IX3D(i1i, j0i, k1i)])
                 +( t1 * (u0 * d0[IX3D(i1i, j1i, k0i)]
                 +u1 * d0[IX3D(i1i, j1i, k1i)])));
-                //  fprintf(stderr, "D assignment end\n");
             }
         }
     }
-    fprintf(stderr, "Going to setBnd3D\n");
     setBnd3D(b, d);
 }
 
@@ -554,27 +533,6 @@ float* Fluid::getYVelocity() {
 
 float* Fluid::getZVelocity() {
     return vz;
-}
-
-void Fluid::printDensityArray() {
-    int i, j;
-    for ( j = 1; j <= fieldDimension; j++ ) {
-        for ( i = 1; i <= fieldDimension; i++ ) {
-            std::cout << dens[ IX2D(i,j) ] << " ";
-        }
-        std::cout << std::endl;
-    }
-}
-
-void Fluid::printVelocityArray() {
-    int i, j;
-    for ( j = 1; j <= fieldDimension; j++ ) {
-        for ( i = 1; i <= fieldDimension; i++ ) {
-            std::cout << "(" << vx[ IX2D(i,j) ] << ","
-                << vy[ IX2D(i,j) ] << ") ";
-        }
-        std::cout << std::endl;
-    }
 }
 
 #endif

@@ -89,8 +89,8 @@ int main( void ) {
      */
     field->setTimeStep(0.0001);
     //field->setViscosity(0.05); // Viscosity of water
-    field->setDiffuse(0.00005);
-    field->setViscosity(0.00005);
+    field->setDiffuse(0.005);
+    field->setViscosity(0.005);
     field->setIterations(2);
 
     std::cout << "Completed\n";
@@ -121,24 +121,6 @@ int main( void ) {
     glm::mat4 rotate;
     glm::mat4 model;
 
-    /*field->addDensity( 255, 23, 23, 15 );
-    field->addDensity( 255, 25, 23, 15 );
-    field->addDensity( 255, 26, 23, 15 );
-    field->addDensity( 255, 27, 23, 1 );
-    field->addDensity( 255, 24, 26, 1 );
-    field->addDensity( 255, 25, 26, 1 );
-    field->addDensity( 255, 26, 26, 1 );
-    field->addDensity( 255, 27, 26, 1 );
-    field->addDensity( 255, 24, 24, 1 );
-    field->addDensity( 255, 27, 24, 1 );
-    field->addDensity( 255, 24, 25, 1 );
-    field->addDensity( 255, 27, 25, 1 );
-
-    field->addVelocity( -100, 100, 0, 25, 25, 1);
-    field->addVelocity( 100, -100, 0, 26, 24, 1);
-    field->addVelocity(-100, -100, 0, 25, 24, 1);
-    field->addVelocity( 100, 100, 0, 26, 26, 1);*/
-
     while (!glfwWindowShouldClose(window)) {
         //Pass the simulator system updates
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -146,9 +128,9 @@ int main( void ) {
 
         //Camera::update();
         field->addVelocity( object.velocityXAmount, object.velocityYAmount, 0,
-         object.velocityXPos, object.velocityYPos, 1 );
+         object.velocityXPos, object.velocityYPos, object.velocityZPos );
         field->addDensity( object.densityAmount, object.densityXPos,
-         object.densityYPos, 1 );
+         object.densityYPos, object.densityZPos );
         field->addDensity( 255, 23, 23, 15 );
         field->addDensity( 255, 25, 23, 15 );
         field->addDensity( 255, 26, 23, 15 );
@@ -233,6 +215,14 @@ static void key_callback(GLFWwindow* window, int key, int scancode,
 int action, int mods) {
             if (key == GLFW_KEY_A) angle -= 2.5f;
             if (key == GLFW_KEY_D) angle += 2.5f;
+            if (key == GLFW_KEY_W) {
+                if (object.mouseZPos+1 <= FLUIDSIZE)
+                    object.mouseZPos++;
+            }
+            if (key == GLFW_KEY_S) {
+                if (object.mouseZPos-1 >=1)
+                    object.mouseZPos--;
+            }
 }
 
 static void error_callback(int error, const char* description) {
@@ -247,20 +237,26 @@ static void cursor_position_callback( GLFWwindow* w, double x, double y ) {
     if ( program.mouse_click ) {
         double dx = object.mouseXPos - object.mouseXPos0;
         double dy = object.mouseYPos - object.mouseYPos0;
+        double dz = object.mouseZPos - object.mouseYPos0;
         static double x0 = 0;
         static double y0 = 0;
+        static double z0 = 0;
 
         object.velocityXAmount = (x - x0);
         object.velocityYAmount = (realY - y0);
+        object.velocityZAmount = object.mouseZPos - dz;
         x0 = x;
         y0 = realY;
+        z0 = object.mouseZPos;
 
         object.velocityXPos = object.mouseXPos; // Need to translate this to object space
         object.velocityYPos = object.mouseYPos;
+        object.velocityZPos = object.mouseZPos;
 
         object.densityAmount += 200;//???
         object.densityXPos = object.mouseXPos;
         object.densityYPos = object.mouseYPos;
+        object.densityZPos = object.mouseZPos;
     } else {
         object.densityAmount = 0;
         object.densityXPos = object.mouseXPos;
@@ -269,6 +265,7 @@ static void cursor_position_callback( GLFWwindow* w, double x, double y ) {
 
     object.mouseXPos0 = object.mouseXPos;
     object.mouseYPos0 = object.mouseYPos;
+    object.mouseZPos0 = object.mouseZPos;
 
     return;
 }
@@ -290,6 +287,7 @@ static void mouse_click_callback(GLFWwindow* w, int button, int action, int mods
 void initUpdateObject() {
     object.densityXPos      = 0;
     object.densityYPos      = 0;
+    object.densityZPos      = 0;
     object.densityAmount    = 0.0;
     object.velocityXAmount  = 0.0;
     object.velocityYAmount  = 0.0;
@@ -301,10 +299,13 @@ void initUpdateObject() {
     object.mouseYPos        = 0.0;
     object.mouseXPos0       = 0;
     object.mouseYPos0       = 0;
+    object.mouseZPos        = 1;
+    object.mouseZPos0       = 1;
 
     program.attribute_vertex = 0; // References location of attrib in shader
     program.attribute_density = 0;
     program.attribute_velocity_x = 0;
     program.attribute_velocity_y = 0;
+    program.attribute_velocity_z = 0;
     program.uniform_size = 0;
 }

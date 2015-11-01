@@ -16,7 +16,7 @@ void main () {
 
     if (flip) {
         vec3 tmp = normalize(vVel);
-        x = vec3(vDens/255.0, 0.0/(1-tmp.y-(vDens/255.0)), 0.0/(tmp.y-(vDens/255.0)) );
+        x = vec3(vDens/255.0, (1-tmp.y-(vDens/255.0)), (tmp.y-(vDens/255.0)) );
     } else {
         if ( vDens == -100000 ) {
             x.x = ( vDens/255.0 + vCol.x + vVel.x/255.0 + tempPos.x )/4.0;
@@ -29,5 +29,6 @@ void main () {
         }
     }
 
-    fragcolor = vec4( x, vDens/255.0 );
+    if (vDens/255.0 > 0.1) fragcolor = vec4( x, vDens/255.0 );
+    else discard;
 }

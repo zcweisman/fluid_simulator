@@ -8,9 +8,9 @@
 #define _GLSL_HPP_
 
 namespace GLSL {
-    GLuint  loadShaders( const std::string&, const std::string& ); //Done
-    void    initShaderVars();                           //Done
-    char*   textFileRead( const char* );                //Done
+    GLuint  loadShaders( const std::string&, const std::string& );
+    void    initShaderVars();
+    char*   textFileRead( const char* );
     void    initVBO();
     void    bufferData(Fluid*);
     void    initArrays();
@@ -236,10 +236,6 @@ void GLSL::bufferData(Fluid* field) {
         for ( j = 1; j <= FLUIDSIZE; j++ ) {
             for ( i = 1; i <= FLUIDSIZE; i++, count++ ) {
                 currentIndex = IX3D(i,j,k);
-                if (vx[currentIndex] > highestx) highestx = vx[currentIndex];
-                if (vy[currentIndex] > highesty) highesty = vy[currentIndex];
-                if (vz[currentIndex] > highestz) highestz = vz[currentIndex];
-                //fprintf(stderr, "velocityx: %f, velocityy: %f, velocityz: %f\n", highestx, highesty, highestz);
                 program.velocity_x_array[count] = vx[currentIndex];
                 program.velocity_y_array[count] = vy[currentIndex];
                 program.velocity_z_array[count] = vz[currentIndex];

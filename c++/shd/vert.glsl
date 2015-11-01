@@ -31,7 +31,7 @@ void main() {
     float z = (vertex_position.z*2.0-1.0)+((vertex_velocity_z/mag)/field_dimension)*2;
 
     vec4 vector = vec4(x, y, z, 1.0);
-    vec4 pos = proj_matrix*view_matrix*model_matrix*vector;//vec4(vertex_position*2.0-1.0, 1.0);
+    vec4 pos = proj_matrix*view_matrix*model_matrix*vector;
 
     vPos.x = vertex_position.x*2.0-1.0;
     vPos.y = vertex_position.y*2.0-1.0;

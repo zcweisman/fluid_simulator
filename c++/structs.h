@@ -39,6 +39,7 @@ typedef struct Program {
 typedef struct Object {
     int     densityXPos;
     int     densityYPos;
+    int     densityZPos;
     float   densityAmount;
 
     float   velocityXAmount;
@@ -55,6 +56,8 @@ typedef struct Object {
     int     mouseXPos0;
     int     mouseYPos;
     int     mouseYPos0;
+    int     mouseZPos;
+    int     mouseZPos0;
 } UpdateObject;
 
 #endif
