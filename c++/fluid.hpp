@@ -12,7 +12,7 @@
 #include <math.h>
 
 #define IX2D( x, y ) ( (x) + ((FLUIDSIZE+2) * (y)) )
-#define IX3D( x, y, z ) ( (x) + (y) * (FLUIDSIZE+2) + (z) * (FLUIDSIZE+2) * (FLUIDSIZE+2) )
+#define IX3D( x, y, z ) ( (x) + ((y) * (FLUIDSIZE+2)) + ((z) * (FLUIDSIZE+2) * (FLUIDSIZE+2)) )
 
 class Fluid {
     float *vx, *vy, *vz, *vx0, *vy0, *vz0, *dens, *s;
@@ -79,19 +79,29 @@ Fluid::~Fluid() {
 }
 
 void Fluid::update() {
-    diffuse ( 1, vx0, vx, viscosity );
+    //fprintf(stderr, "\n--- Diffuse 1 ---\n");
+    /*diffuse ( 1, vx0, vx, viscosity );
+    //fprintf(stderr, "\n--- Diffuse 2 ---\n");
     diffuse ( 2, vy0, vy, viscosity );
 
+    //fprintf(stderr, "\n--- Project 1 ---\n");
     project ( vx0, vy0, vx, vy );
 
+    //fprintf(stderr, "\n--- Advect 1 ---\n");
     advect ( 1, vx, vx0, vx0, vy0 );
+    //fprintf(stderr, "\n--- Advect 2 ---\n");
     advect ( 2, vy, vy0, vx0, vy0 );
 
+    //fprintf(stderr, "\n--- Project 2 ---\n");
     project ( vx, vy, vx0, vy0 );
 
+    //fprintf(stderr, "\n--- Diffuse 1 ---\n");
     diffuse ( 0, s, dens, diffusion );
     advect ( 0, dens, s, vx, vy );
-    /*diffuse(1, vx0, vx, viscosity);
+
+    fprintf(stderr, "\n------ End of Update ------\n");*/
+    fprintf(stderr, "\n------ Start Update ------\n");
+    diffuse(1, vx0, vx, viscosity);
     diffuse(2, vy0, vy, viscosity);
     diffuse(3, vz0, vz, viscosity);
 
@@ -104,13 +114,14 @@ void Fluid::update() {
     project3D(vx, vy, vz, vx0, vy0);
 
     diffuse(0, s, dens, diffusion);
-    advect3D(0, dens, s, vx, vy, vz);*/
+    advect3D(0, dens, s, vx, vy, vz);
+    fprintf(stderr, "\n------ End of Update ------\n");
 }
 
 void Fluid::diffuse( int b, float* x, float* x0, float c ) {
     float a = dt*c*fieldDimension*fieldDimension;
-    linSolve( b, x, x0, a, 1+4*a );
-    //linSolve3D(b, x, x0, 1, 1+6*a);
+    //linSolve( b, x, x0, a, 1+4*a );
+    linSolve3D(b, x, x0, a, 1+6*a);
 }
 
 void Fluid::linSolve( int b, float* x, float* x0, float a, float c ) {
@@ -119,7 +130,7 @@ void Fluid::linSolve( int b, float* x, float* x0, float a, float c ) {
     for (int k = 0; k < iterations; k++) {
         for (int j = 1; j <= fieldDimension; j++) {
             for (int i = 1; i <= fieldDimension; i++) {
-                currentIndex = IX3D(i,j,1);
+                currentIndex = IX3D(i,j,k);
                 //if ( !program.locked_index_array[currentIndex] ) { // Makes sure the current block isnt an obstacle
                     x[currentIndex] = (x0[currentIndex] +
                      a*(x[IX3D(i+1, j, 1)] + x[IX3D(i-1, j, 1)] +
@@ -153,22 +164,32 @@ void Fluid::linSolve( int b, float* x, float* x0, float a, float c ) {
 }
 
 void Fluid::linSolve3D(int b, float* x, float* x0, float a, float c) {
-    float cRecip = 1.0 / c;
-    int currentIndex;
+    float cRecip = 1.f / c;
+    unsigned int currentIndex;
+    static int count = 0;
+    static float highest = 0.0f;
+
+    // /fprintf(stderr, "------------- c: %f, cRecip: %f, a: %f --------------\n", c, cRecip, a);
+
     for (int m = 0; m < iterations; m++) {
         for (int k = 1; k <= fieldDimension; k++) {
             for (int j = 1; j <= fieldDimension; j++) {
                 for (int i = 1; i <= fieldDimension; i++) {
                     currentIndex = IX3D(i,j,k);
+                    //fprintf(stderr, "Indices: %d, %d, %d\n", i, j, k);
                         x[currentIndex] = (x0[currentIndex] +
-                         a*(x[IX3D(i+1, j, k)] + x[IX3D(i-1, j, k)] +
-                            x[IX3D(i, j+1, k)] + x[IX3D(i, j-1, k)] +
-                            x[IX3D(i, j, k+1)] + x[IX3D(i,j,k-1)])
+                          a*(x[IX3D(i+1, j, k)]
+                            + x[IX3D(i-1, j, k)]
+                            + x[IX3D(i, j+1, k)]
+                            + x[IX3D(i, j-1, k)]
+                            + x[IX3D(i, j, k+1)]
+                            + x[IX3D(i,j,k-1)])
                         ) * cRecip;
+                    if (x[currentIndex] > highest) highest = x[currentIndex];
                 }
             }
         }
-
+        //fprintf(stderr, "Before setBnd3D: %f\n", highest);
         setBnd3D(b, x);
     }
 }
@@ -183,6 +204,7 @@ void Fluid::advect( int b, float* d, float* d0, float* u, float* v ) {
 
     int i, j, currentIndex;
 
+    fprintf(stderr, "Entering advection loops....");
     for ( j = 1, jfloat = 1.0f; j <= fieldDimension; j++, jfloat++ ) {
         for ( i = 1, ifloat = 1.0f; i <= fieldDimension; i++, ifloat++ ) {
             currentIndex = IX3D(i,j,1);
@@ -211,11 +233,22 @@ void Fluid::advect( int b, float* d, float* d0, float* u, float* v ) {
             int j0i = j0;
             int j1i = j1;
 
+            if (i0i < 0) i0i = 0;
+            if (i0i > FLUIDSIZE) i0i = FLUIDSIZE;
+            if (i1i < 0) i1i = 0;
+            if (i1i > FLUIDSIZE) i1i = FLUIDSIZE;
+
+            if (j0i < 0) j0i = 0;
+            if (j0i > FLUIDSIZE) j0i = FLUIDSIZE;
+            if (j1i < 0) j1i = 0;
+            if (j1i > FLUIDSIZE) j1i = FLUIDSIZE;
+
             d[currentIndex] = s0*(t0*d0[IX3D(i0i,j0i,1)] +
              t1*d0[IX3D(i0i,j1i,1)]) + s1*(t0*d0[IX3D(i1i,j0i,1)] +
                             t1*d0[IX3D(i1i,j1i,1)]);
         }
     }
+    fprintf(stderr, "Finished.\n Entering setBnd()\n");
 
     setBnd(b,d);
 }
@@ -230,70 +263,107 @@ void Fluid::advect3D(int b, float* d, float* d0, float* u, float* v, float* w) {
   float s0, s1, t0, t1, u0, u1;
   float tmp1, tmp2, tmp3, x, y, z;
 
-  float Nfloat = FLUIDSIZE+2;
+  float Nfloat = FLUIDSIZE+2.0f;
   float ifloat, jfloat, kfloat;
   int i, j, k, n = fieldDimension, currentIndex;
 
+  fprintf(stderr, "Enter loops\n");
   for(k = 1, kfloat = 1; k <= n; k++, kfloat++) {
       for(j = 1, jfloat = 1; j <= n; j++, jfloat++) {
           for(i = 1, ifloat = 1; i <= n; i++, ifloat++) {
-              currentIndex = IX3D(i,j,k);
-              tmp1 = dtx * u[currentIndex];
-              tmp2 = dty * v[currentIndex];
-              tmp3 = dtz * w[currentIndex];
-              x    = ifloat - tmp1;
-              y    = jfloat - tmp2;
-              z    = kfloat - tmp3;
+                currentIndex = IX3D(i,j,k);
+                tmp1 = dtx * u[currentIndex];
+                tmp2 = dty * v[currentIndex];
+                tmp3 = dtz * w[currentIndex];
+                x    = ifloat - tmp1;
+                y    = jfloat - tmp2;
+                z    = kfloat - tmp3;
 
-              if(x < 0.5f) x = 0.5f;
-              if(x > Nfloat + 0.5f) x = Nfloat + 0.5f;
-              i0 = floorf(x);
-              i1 = i0 + 1.0f;
-              if(y < 0.5f) y = 0.5f;
-              if(y > Nfloat + 0.5f) y = Nfloat + 0.5f;
-              j0 = floorf(y);
-              j1 = j0 + 1.0f;
-              if(z < 0.5f) z = 0.5f;
-              if(z > Nfloat + 0.5f) z = Nfloat + 0.5f;
-              k0 = floorf(z);
-              k1 = k0 + 1.0f;
+                if(x < 0.5f)
+                    x = 0.5f;
+                if(x > Nfloat + 0.5f)
+                    x = Nfloat + 0.5f;
+                i0 = floorf(x);
+                i1 = i0 + 1.0f;
 
-              s1 = x - i0;
-              s0 = 1.0f - s1;
-              t1 = y - j0;
-              t0 = 1.0f - t1;
-              u1 = z - k0;
-              u0 = 1.0f - u1;
+                if(y < 0.5f)
+                    y = 0.5f;
+                if(y > Nfloat + 0.5f)
+                    y = Nfloat + 0.5f;
+                j0 = floorf(y);
+                j1 = j0 + 1.0f;
 
-              int i0i = i0;
-              int i1i = i1;
-              int j0i = j0;
-              int j1i = j1;
-              int k0i = k0;
-              int k1i = k1;
+                if(z < 0.5f)
+                    z = 0.5f;
+                if(z > Nfloat + 0.5f)
+                    z = Nfloat + 0.5f;
+                k0 = floorf(z);
+                k1 = k0 + 1.0f;
 
-              d[currentIndex] =
-                    s0 * ( t0 * (u0 * d0[IX3D(i0i, j0i, k0i)]
-                                +u1 * d0[IX3D(i0i, j0i, k1i)])
-                        +( t1 * (u0 * d0[IX3D(i0i, j1i, k0i)]
-                                +u1 * d0[IX3D(i0i, j1i, k1i)])))
-                   +s1 * ( t0 * (u0 * d0[IX3D(i1i, j0i, k0i)]
-                                +u1 * d0[IX3D(i1i, j0i, k1i)])
-                        +( t1 * (u0 * d0[IX3D(i1i, j1i, k0i)]
-                                +u1 * d0[IX3D(i1i, j1i, k1i)])));
+                s1 = x - i0;
+                s0 = 1.0f - s1;
+                t1 = y - j0;
+                t0 = 1.0f - t1;
+                u1 = z - k0;
+                u0 = 1.0f - u1;
+
+                int i0i = i0;
+                int i1i = i1;
+                int j0i = j0;
+                int j1i = j1;
+                int k0i = k0;
+                int k1i = k1;
+
+                if (i0i < 0) i0i = 0;
+                if (i0i > FLUIDSIZE) i0i = FLUIDSIZE;
+                if (i1i < 0) i1i = 0;
+                if (i1i > FLUIDSIZE) i1i = FLUIDSIZE;
+
+                if (j0i < 0) j0i = 0;
+                if (j0i > FLUIDSIZE) j0i = FLUIDSIZE;
+                if (j1i < 0) j1i = 0;
+                if (j1i > FLUIDSIZE) j1i = FLUIDSIZE;
+
+                if (k0i < 0) k0i = 0;
+                if (k0i > FLUIDSIZE) k0i = FLUIDSIZE;
+                if (k1i < 0) j1 = 0;
+                if (k1i > FLUIDSIZE) k1i = FLUIDSIZE;
+
+
+                //fprintf(stderr, "i0i: %d, i1i: %d, j0i: %d, j1i: %d, k0i: %d, k1i: %d\n",
+                //  i0i, i1i, j0i, j1i, k0i, k1i);
+                d[currentIndex] =
+                /*s0 * ( t0 * (u0 * d0[IX3D(i0i, j0i, 1)]
+                +u1 * d0[IX3D(i0i, j0i, 1)])
+                +( t1 * (u0 * d0[IX3D(i0i, j1i, 1)]
+                +u1 * d0[IX3D(i0i, j1i, 1)])))
+                +s1 * ( t0 * (u0 * d0[IX3D(i1i, j0i, 1)]
+                +u1 * d0[IX3D(i1i, j0i, 1)])
+                +( t1 * (u0 * d0[IX3D(i1i, j1i, 1)]
+                +u1 * d0[IX3D(i1i, j1i, 1)])));*/
+                s0 * ( t0 * (u0 * d0[IX3D(i0i, j0i, k0i)]
+                +u1 * d0[IX3D(i0i, j0i, k1i)])
+                +( t1 * (u0 * d0[IX3D(i0i, j1i, k0i)]
+                +u1 * d0[IX3D(i0i, j1i, k1i)])))
+                +s1 * ( t0 * (u0 * d0[IX3D(i1i, j0i, k0i)]
+                +u1 * d0[IX3D(i1i, j0i, k1i)])
+                +( t1 * (u0 * d0[IX3D(i1i, j1i, k0i)]
+                +u1 * d0[IX3D(i1i, j1i, k1i)])));
+                //  fprintf(stderr, "D assignment end\n");
             }
         }
     }
+    fprintf(stderr, "Going to setBnd3D\n");
     setBnd3D(b, d);
 }
 
-void Fluid::project( float* u, float* v, float* p, float* div ) {
+void Fluid::project(float* u, float* v, float* p, float* div) {
     int i, j, k, currentIndex;
     float n = fieldDimension+2;
     float h = 1.0f/fieldDimension;
 
-    for ( j=1 ; j<=FLUIDSIZE ; j++ ) {
-        for ( i=1 ; i<=FLUIDSIZE ; i++ ) {
+    for (j = 1; j <= FLUIDSIZE; j++) {
+        for (i = 1 ;i <= FLUIDSIZE; i++) {
             currentIndex = IX3D(i,j,1);
             div[currentIndex] = -0.5*(
                 u[IX3D(i+1,j,1)]-
@@ -384,53 +454,61 @@ void Fluid::setBnd(int b, float* x) {
 }
 
 void Fluid::setBnd3D(int b, float* x) {
-    int n = fieldDimension;
+    int n = fieldDimension+2;
 
-    for(int k = 1; k <= n; k++) {
-        for(int j = 1; j <= n; j++) {
+    for(int k = 1; k <= n-2; k++) {
+        for(int j = 1; j <= n-2; j++) {
             x[IX3D(0, j, k)] = b == 1 ? -x[IX3D(1, j, k)] : x[IX3D(1, j, k)];
-            x[IX3D(n+1, j, k)] = b == 1 ? -x[IX3D(n, j, k)] : x[IX3D(n, j, k)];
+            x[IX3D(n-1, j, k)] = b == 1 ? -x[IX3D(n-2, j, k)] : x[IX3D(n-2, j, k)];
         }
     }
 
-    for(int k = 1; k <= n; k++) {
-        for(int i = 1; i <= n; i++) {
+    for(int k = 1; k <= n-2; k++) {
+        for(int i = 1; i <= n-2; i++) {
             x[IX3D(i, 0  , k)] = b == 2 ? -x[IX3D(i, 1  , k)] : x[IX3D(i, 1  , k)];
-            x[IX3D(i, n+1, k)] = b == 2 ? -x[IX3D(i, n, k)] : x[IX3D(i, n, k)];
+            x[IX3D(i, n-1, k)] = b == 2 ? -x[IX3D(i, n-2, k)] : x[IX3D(i, n-2, k)];
         }
     }
 
-    for(int j = 1; j <= n; j++) {
-        for(int i = 1; i <= n; i++) {
+    for(int j = 1; j <= n-2; j++) {
+        for(int i = 1; i <= n-2; i++) {
             x[IX3D(i, j, 0  )] = b == 3 ? -x[IX3D(i, j, 1  )] : x[IX3D(i, j, 1  )];
-            x[IX3D(i, j, n+1)] = b == 3 ? -x[IX3D(i, j, n)] : x[IX3D(i, j, n)];
+            x[IX3D(i, j, n-1)] = b == 3 ? -x[IX3D(i, j, n-2)] : x[IX3D(i, j, n-2)];
         }
     }
-
+    //fprintf(stderr, "Starting corner sets....");
     x[IX3D(0, 0, 0)]       = 0.33f * (x[IX3D(1, 0, 0)]
                                   + x[IX3D(0, 1, 0)]
                                   + x[IX3D(0, 0, 1)]);
-    x[IX3D(0, n+1, 0)]     = 0.33f * (x[IX3D(1, n+1, 0)]
-                                  + x[IX3D(0, n, 0)]
-                                  + x[IX3D(0, n+1, 1)]);
-    x[IX3D(0, 0, n+1)]     = 0.33f * (x[IX3D(1, 0, n+1)]
-                                  + x[IX3D(0, 1, n+1)]
-                                  + x[IX3D(0, 0, n+2)]);
-    x[IX3D(0, n+1, n+1)]   = 0.33f * (x[IX3D(1, n+1, n+1)]
-                                  + x[IX3D(0, n, n+1)]
-                                  + x[IX3D(0, n+1, n)]);
-    x[IX3D(n+1, 0, 0)]     = 0.33f * (x[IX3D(n, 0, 0)]
-                                  + x[IX3D(n+1, 1, 0)]
-                                  + x[IX3D(n+1, 0, 1)]);
-    x[IX3D(n+1, n+1, 0)]   = 0.33f * (x[IX3D(n, n+1, 0)]
-                                  + x[IX3D(n+1, n, 0)]
-                                  + x[IX3D(n+1, n+1, 1)]);
-    x[IX3D(n+1, 0, n+1)]   = 0.33f * (x[IX3D(n, 0, n+1)]
-                                  + x[IX3D(n+1, 1, n+1)]
-                                  + x[IX3D(n+1, 0, n)]);
-    x[IX3D(n+1, n+1, n+1)] = 0.33f * (x[IX3D(n, n+1, n+1)]
-                                  + x[IX3D(n+1, n, n+1)]
-                                  + x[IX3D(n+1, n+1, n)]);
+
+    x[IX3D(0, n-1, 0)]     = 0.33f * (x[IX3D(1, n-1, 0)]
+                                  + x[IX3D(0, n-2, 0)]
+                                  + x[IX3D(0, n-1, 1)]);
+
+    x[IX3D(0, 0, n-1)]     = 0.33f * (x[IX3D(1, 0, n-1)]
+                                  + x[IX3D(0, 1, n-1)]
+                                  + x[IX3D(0, 0, n-2)]);
+
+    x[IX3D(0, n-1, n-1)]   = 0.33f * (x[IX3D(1, n-1, n-1)]
+                                  + x[IX3D(0, n-2, n-1)]
+                                  + x[IX3D(0, n-1, n-2)]);
+
+    x[IX3D(n-1, 0, 0)]     = 0.33f * (x[IX3D(n-2, 0, 0)]
+                                  + x[IX3D(n-1, 1, 0)]
+                                  + x[IX3D(n-1, 0, 1)]);
+
+    x[IX3D(n-1, n-1, 0)]   = 0.33f * (x[IX3D(n-2, n-1, 0)]
+                                  + x[IX3D(n-1, n-2, 0)]
+                                  + x[IX3D(n-1, n-1, 1)]);
+
+    x[IX3D(n-1, 0, n-1)]   = 0.33f * (x[IX3D(n-2, 0, n-1)]
+                                  + x[IX3D(n-1, 1, n-1)]
+                                  + x[IX3D(n-1, 0, n-2)]);
+
+    x[IX3D(n-1, n-1, n-1)] = 0.33f * (x[IX3D(n-2, n-1, n-1)]
+                                  + x[IX3D(n-1, n-2, n-1)]
+                                  + x[IX3D(n-1, n-1, n-2)]);
+    //fprintf(stderr, "Completed\n");
 }
 
 void Fluid::setViscosity( float v ) {

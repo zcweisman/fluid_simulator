@@ -2,7 +2,7 @@
 
 in vec3     vPos;
 in vec3     vCol;
-in vec2     vVel;
+in vec3     vVel;
 in float    vDens;
 
 uniform int field_dimension;
@@ -15,17 +15,19 @@ void main () {
     bool flip = true;
 
     if (flip) {
-        vec2 tmp = normalize(vVel);
-        x = vec3( vDens/255.0, 0.0/(1-tmp.y-(vDens/255.0)), 0.0/(tmp.y-(vDens/255.0)) );
+        vec3 tmp = normalize(vVel);
+        x = vec3(vDens/255.0, 0.0/(1-tmp.y-(vDens/255.0)), 0.0/(tmp.y-(vDens/255.0)) );
     } else {
-        if ( vDens < -100000 ) {
+        if ( vDens == -100000 ) {
             x.x = ( vDens/255.0 + vCol.x + vVel.x/255.0 + tempPos.x )/4.0;
             x.y = ( vDens/255.0 + vCol.y + vVel.y/255.0 + tempPos.y )/4.0;
             x.z = ( vDens/255.0 + vCol.z + tempPos.z )/3.0;
+        } else if (vDens == 0.0) {
+            x = vec3(0.0, 0.0, 0.0);
         } else {
             x = vec3( vDens/10, 0.0, 0.0 );
         }
     }
 
-    fragcolor = vec4( x, 1.0 );
+    fragcolor = vec4( x, vDens/255.0 );
 }

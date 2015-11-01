@@ -163,14 +163,14 @@ void GLSL::initArrays() {
     for (int k = 0; k < FLUIDSIZE; k++) {
         for (int j = 0; j < FLUIDSIZE; j++ ) {
             for (int i = 0; i < FLUIDSIZE; i++, count++ ) {
-                program.vertex_array[count*3] = (GLfloat)((i+1.0f-0.5f)/FLUIDSIZE);
-                program.vertex_array[count*3+1] = (GLfloat)((j+1.0f-0.5f)/FLUIDSIZE);
+                program.vertex_array[count*3] = (GLfloat)((i+1.f-0.5f)/FLUIDSIZE);
+                program.vertex_array[count*3+1] = (GLfloat)((j+1.f-0.5f)/FLUIDSIZE);
                 program.vertex_array[count*3+2] = (GLfloat)((k+1.f-0.5f)/FLUIDSIZE);
                 program.index_array[count] = count; //Simply references the current
-                program.density_array[count] = 0.0f;
-                program.velocity_x_array[count] = 0.0f;
-                program.velocity_y_array[count] = 0.0f;
-                program.velocity_z_array[count] = 0.0f;
+                program.density_array[count] = 0.f;
+                program.velocity_x_array[count] = 0.f;
+                program.velocity_y_array[count] = 0.f;
+                program.velocity_z_array[count] = 0.f;
                 program.locked_index_array[count] = false;
             }
         }
@@ -230,11 +230,16 @@ void GLSL::bufferData(Fluid* field) {
     float* vz = field->getZVelocity();
     float* d = field->getDensity();
     int i, j, k, count = 0, currentIndex;
+    float highestx = 0, highesty = 0, highestz = 0;
 
     for (k = 1; k <= FLUIDSIZE; k++) {
         for ( j = 1; j <= FLUIDSIZE; j++ ) {
             for ( i = 1; i <= FLUIDSIZE; i++, count++ ) {
-                currentIndex = IX3D(i,j,1);
+                currentIndex = IX3D(i,j,k);
+                if (vx[currentIndex] > highestx) highestx = vx[currentIndex];
+                if (vy[currentIndex] > highesty) highesty = vy[currentIndex];
+                if (vz[currentIndex] > highestz) highestz = vz[currentIndex];
+                //fprintf(stderr, "velocityx: %f, velocityy: %f, velocityz: %f\n", highestx, highesty, highestz);
                 program.velocity_x_array[count] = vx[currentIndex];
                 program.velocity_y_array[count] = vy[currentIndex];
                 program.velocity_z_array[count] = vz[currentIndex];

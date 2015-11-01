@@ -1,0 +1,13 @@
+Normal error <1280> please ignore
+Initialzing fluid field...Completed
+Installing shaders...Completed
+Vertex Attribute Shader Address: 0
+Density Attribute Shader Address: 1
+X Velocity Attribute Shader Address: 2
+Y Velocity Attribute Shader Address: 3
+VBO Address: 2
+DBO Address: 3
+VELBO Address: 4
+VELBO Address: 5
+VELBO Address: 6
+IBO Address: 7

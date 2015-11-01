@@ -8,7 +8,7 @@ in float    vertex_velocity_z;
 
 out vec3    vPos;
 out vec3    vCol;
-out vec2    vVel;
+out vec3    vVel;
 out float   vDens;
 
 uniform int field_dimension;
@@ -25,13 +25,13 @@ float norm3D(float x, float y, float z) {
 }
 
 void main() {
-    float mag = norm2D(vertex_velocity_x, vertex_velocity_y);
+    float mag = norm3D(vertex_velocity_x, vertex_velocity_y, vertex_velocity_z);
     float x = (vertex_position.x*2.0-1.0)+((vertex_velocity_x/mag)/field_dimension)*2;
     float y = (vertex_position.y*2.0-1.0)+((vertex_velocity_y/mag)/field_dimension)*2;
     float z = (vertex_position.z*2.0-1.0)+((vertex_velocity_z/mag)/field_dimension)*2;
 
     vec4 vector = vec4(x, y, z, 1.0);
-    vec4 pos = proj_matrix*model_matrix*view_matrix*vector;
+    vec4 pos = proj_matrix*view_matrix*model_matrix*vector;//vec4(vertex_position*2.0-1.0, 1.0);
 
     vPos.x = vertex_position.x*2.0-1.0;
     vPos.y = vertex_position.y*2.0-1.0;
@@ -39,8 +39,8 @@ void main() {
 
     vCol = vec3( 1.0, 0.0, 0.0 );
     vDens = vertex_density;
-    vVel = vec2(vertex_velocity_x, vertex_velocity_y);
+    vVel = vec3(vertex_velocity_x, vertex_velocity_y, vertex_velocity_z);
 
     gl_Position = vec4(pos.xyz, 1.0);
-    gl_PointSize = 6;
+    gl_PointSize = 5;
 }

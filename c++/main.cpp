@@ -14,7 +14,7 @@
 #include <string>
 #include <stdio.h>
 
-#define FLUIDSIZE 50
+#define FLUIDSIZE 30
 
 #include "structs.h"
 
@@ -84,11 +84,14 @@ int main( void ) {
 
     Fluid* field = new Fluid(FLUIDSIZE, windowWidth);
     //field->setDiffuse(0.5);
+    /*
+     * For 150^2 , use density and viscosity of 0.05, timestep of 0.0001.
+     */
     field->setTimeStep(0.0001);
     //field->setViscosity(0.05); // Viscosity of water
-    field->setDiffuse(0.05);
-    field->setViscosity(0.05);
-    field->setIterations(20);
+    field->setDiffuse(0.00005);
+    field->setViscosity(0.00005);
+    field->setIterations(2);
 
     std::cout << "Completed\n";
 
@@ -105,6 +108,8 @@ int main( void ) {
     glEnable(GL_PROGRAM_POINT_SIZE);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDepthMask(GL_TRUE);
 
     //General framecount variable
@@ -116,6 +121,24 @@ int main( void ) {
     glm::mat4 rotate;
     glm::mat4 model;
 
+    /*field->addDensity( 255, 23, 23, 15 );
+    field->addDensity( 255, 25, 23, 15 );
+    field->addDensity( 255, 26, 23, 15 );
+    field->addDensity( 255, 27, 23, 1 );
+    field->addDensity( 255, 24, 26, 1 );
+    field->addDensity( 255, 25, 26, 1 );
+    field->addDensity( 255, 26, 26, 1 );
+    field->addDensity( 255, 27, 26, 1 );
+    field->addDensity( 255, 24, 24, 1 );
+    field->addDensity( 255, 27, 24, 1 );
+    field->addDensity( 255, 24, 25, 1 );
+    field->addDensity( 255, 27, 25, 1 );
+
+    field->addVelocity( -100, 100, 0, 25, 25, 1);
+    field->addVelocity( 100, -100, 0, 26, 24, 1);
+    field->addVelocity(-100, -100, 0, 25, 24, 1);
+    field->addVelocity( 100, 100, 0, 26, 26, 1);*/
+
     while (!glfwWindowShouldClose(window)) {
         //Pass the simulator system updates
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -126,23 +149,23 @@ int main( void ) {
          object.velocityXPos, object.velocityYPos, 1 );
         field->addDensity( object.densityAmount, object.densityXPos,
          object.densityYPos, 1 );
-        field->addDensity( 255, 23, 23, 1 );
-        field->addDensity( 255, 25, 23, 1 );
-        field->addDensity( 255, 26, 23, 1 );
-        field->addDensity( 255, 27, 23, 1 );
-        field->addDensity( 255, 24, 26, 1 );
-        field->addDensity( 255, 25, 26, 1 );
-        field->addDensity( 255, 26, 26, 1 );
-        field->addDensity( 255, 27, 26, 1 );
-        field->addDensity( 255, 24, 24, 1 );
-        field->addDensity( 255, 27, 24, 1 );
-        field->addDensity( 255, 24, 25, 1 );
-        field->addDensity( 255, 27, 25, 1 );
+        field->addDensity( 255, 23, 23, 15 );
+        field->addDensity( 255, 25, 23, 15 );
+        field->addDensity( 255, 26, 23, 15 );
+        field->addDensity( 255, 27, 23, 15 );
+        field->addDensity( 255, 24, 26, 15 );
+        field->addDensity( 255, 25, 26, 15 );
+        field->addDensity( 255, 26, 26, 15 );
+        field->addDensity( 255, 27, 26, 15 );
+        field->addDensity( 255, 24, 24, 15 );
+        field->addDensity( 255, 27, 24, 15 );
+        field->addDensity( 255, 24, 25, 15 );
+        field->addDensity( 255, 27, 25, 15 );
 
-        field->addVelocity( -100, 100, 0, 25, 25, 1 );
-        field->addVelocity( 100, -100, 0, 26, 24, 1 );
-        field->addVelocity(-100, -100, 0, 25, 24, 1 );
-        field->addVelocity( 100, 100, 0, 26, 26, 1 );
+        field->addVelocity( -100, 100, -100, 25, 25, 15);
+        field->addVelocity( 100, -100, 100, 26, 24, 14);
+        field->addVelocity(-100, -100, -100, 25, 24, 14);
+        field->addVelocity( 100, 100, 100, 26, 26, 15);
         field->update();
 
         GLSL::bufferData(field);
