@@ -35,5 +35,4 @@ void main() {
     velocity = vec3(vertex_velocity_x, vertex_velocity_y, vertex_velocity_z);
 
     gl_Position = vec4(pos.xyz, 1.0);
-    gl_PointSize = 5;
 }

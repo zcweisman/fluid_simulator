@@ -32,7 +32,7 @@ static void key_callback( GLFWwindow*, int, int, int, int );
 static void error_callback( int, const char* );
 static void cursor_position_callback( GLFWwindow*, double, double );
 static void mouse_click_callback( GLFWwindow*, int, int, int );
-static float angle = 0;
+static float angle = 0.f, zoom = 0.85f;
 
 #include "camera.hpp"
 #include "glsl.hpp"
@@ -90,10 +90,10 @@ int main( void ) {
      * For 150^2 , use density and viscosity of 0.05, timestep of 0.0001.
      *
      */
-    field->setTimeStep(0.01);
+    field->setTimeStep(0.1);
     //field->setViscosity(0.05); // Viscosity of water
-    field->setDiffuse(0.05);
-    field->setViscosity(0.3);
+    field->setDiffuse(0.005);
+    field->setViscosity(0.5);
     field->setIterations(15);
 
     std::cout << "Completed\n";
@@ -120,7 +120,7 @@ int main( void ) {
     int count = 0;
     glm::mat4 view = glm::mat4(1.f);
     glm::mat4 projection = glm::perspective(80.f, 1.f, 0.1f, 100.f);
-    glm::mat4 scale = glm::scale(glm::mat4(1.f), glm::vec3(0.5, 0.5f, 0.5f));
+    glm::mat4 scale = glm::scale(glm::mat4(1.f), glm::vec3(zoom, zoom, zoom));
     glm::mat4 translate = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, -0.5f));
     glm::mat4 rotate;
     glm::mat4 model;
@@ -135,23 +135,15 @@ int main( void ) {
          object.velocityXPos, object.velocityYPos, object.velocityZPos );
         field->addDensity( object.densityAmount, object.densityXPos,
          object.densityYPos, object.densityZPos );
-        field->addDensity( 255, 24, 24, 24 );
-        field->addDensity( 255, 24, 24, 27 );
-        field->addDensity( 255, 27, 24, 24 );
-        field->addDensity( 255, 27, 24, 27 );
-        field->addDensity( 255, 24, 27, 24 );
-        field->addDensity( 255, 24, 27, 27 );
-        field->addDensity( 255, 27, 27, 24 );
-        field->addDensity( 255, 27, 27, 27 );
+        field->addDensity( 255, 25, 2, 25 );
+        field->addDensity( 255, 25, 2, 26 );
+        field->addDensity( 255, 26, 2, 25 );
+        field->addDensity( 255, 26, 2, 26 );
 
-        field->addVelocity(-255, -255, -255, 25, 25, 25);
-        field->addVelocity(-255, -255, 255, 25, 25, 26);
-        field->addVelocity(-255, 255, -255, 25, 26, 25);
-        field->addVelocity(-255, 255, 255, 25, 26, 26);
-        field->addVelocity(255, -255, -255, 26, 25, 25);
-        field->addVelocity(255, -255, 255, 26, 25, 26);
-        field->addVelocity(255, 255, -255, 26, 26, 25);
-        field->addVelocity(255, 255, 255, 26, 26, 26);
+        field->addVelocity(0, 255, 0, 25, 1, 25);
+        field->addVelocity(0, 255, 0, 25, 1, 26);
+        field->addVelocity(0, 255, 0, 26, 1, 25);
+        field->addVelocity(0, 255, 0, 26, 1, 26);
         field->update();
 
         GLSL::bufferData(field);
@@ -227,6 +219,8 @@ int action, int mods) {
                 if (object.mouseZPos-1 >=1)
                     object.mouseZPos--;
             }
+            if (key == GLFW_KEY_UP) zoom += 0.05;
+            if (key == GLFW_KEY_DOWN) zoom -= 0.05;
 }
 
 static void error_callback(int error, const char* description) {

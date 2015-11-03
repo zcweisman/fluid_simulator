@@ -337,10 +337,10 @@ void GLSL::bufferData(Fluid* field) {
                 program.velocity_y_array[count] = vy[currentIndex];
                 program.velocity_z_array[count] = vz[currentIndex];
                 program.density_array[count] = d[currentIndex];
-                /*if (vy[currentIndex] > highestDensity) {
+                if (vy[currentIndex] > highestDensity) {
                     highestDensity = vy[currentIndex];
                     fprintf(stderr, "%f\n", highestDensity);
-                }*/
+                }
             }
         }
     }
