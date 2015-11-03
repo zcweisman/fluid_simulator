@@ -6,10 +6,8 @@ in float    vertex_velocity_x;
 in float    vertex_velocity_y;
 in float    vertex_velocity_z;
 
-out vec3    vPos;
-out vec3    vCol;
-out vec3    vVel;
-out float   vDens;
+out vec3    velocity;
+out float   density;
 
 uniform int field_dimension;
 uniform mat4 proj_matrix;
@@ -33,13 +31,8 @@ void main() {
     vec4 vector = vec4(x, y, z, 1.0);
     vec4 pos = proj_matrix*view_matrix*model_matrix*vector;
 
-    vPos.x = vertex_position.x*2.0-1.0;
-    vPos.y = vertex_position.y*2.0-1.0;
-    vPos.z = vertex_position.z*2.0-1.0;
-
-    vCol = vec3( 1.0, 0.0, 0.0 );
-    vDens = vertex_density;
-    vVel = vec3(vertex_velocity_x, vertex_velocity_y, vertex_velocity_z);
+    density = vertex_density;
+    velocity = vec3(vertex_velocity_x, vertex_velocity_y, vertex_velocity_z);
 
     gl_Position = vec4(pos.xyz, 1.0);
     gl_PointSize = 5;

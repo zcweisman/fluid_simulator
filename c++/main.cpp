@@ -3,6 +3,10 @@
  * main.cpp
  * Accomplishes tasks related to initializing the GL pipeline
  */
+ #include <iostream>
+ #include <string>
+ #include <stdio.h>
+ #include <thread>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -10,11 +14,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <iostream>
-#include <string>
-#include <stdio.h>
-
-#define FLUIDSIZE 30
+#define FLUIDSIZE 55
 
 #include "structs.h"
 
@@ -23,6 +23,8 @@ static UpdateObject object;
 static GLFWwindow* window;
 
 #include "fluid.hpp"
+
+static Fluid* field;
 
 void initUpdateObject();
 
@@ -82,21 +84,23 @@ int main( void ) {
 
     std::cout << "Initialzing fluid field...";
 
-    Fluid* field = new Fluid(FLUIDSIZE, windowWidth);
+    field = new Fluid(FLUIDSIZE, windowWidth);
     //field->setDiffuse(0.5);
     /*
      * For 150^2 , use density and viscosity of 0.05, timestep of 0.0001.
+     *
      */
-    field->setTimeStep(0.0001);
+    field->setTimeStep(0.01);
     //field->setViscosity(0.05); // Viscosity of water
-    field->setDiffuse(0.005);
-    field->setViscosity(0.005);
-    field->setIterations(2);
+    field->setDiffuse(0.05);
+    field->setViscosity(0.3);
+    field->setIterations(15);
 
     std::cout << "Completed\n";
 
     std::cout << "Installing shaders...";
-    program.program = GLSL::loadShaders("shd/vert.glsl", "shd/frag.glsl");
+    //program.program = GLSL::loadShaders("shd/vert.glsl", "shd/frag.glsl");
+    program.program = GLSL::loadShadersGeom("shd/vert.glsl", "shd/geom.glsl", "shd/frag.glsl");
     std::cout << "Completed\n";
 
     GLSL::initShaderVars();
@@ -116,7 +120,7 @@ int main( void ) {
     int count = 0;
     glm::mat4 view = glm::mat4(1.f);
     glm::mat4 projection = glm::perspective(80.f, 1.f, 0.1f, 100.f);
-    glm::mat4 scale = glm::scale(glm::mat4(1.f), glm::vec3(0.25f, 0.25f, 0.25f));
+    glm::mat4 scale = glm::scale(glm::mat4(1.f), glm::vec3(0.5, 0.5f, 0.5f));
     glm::mat4 translate = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, -0.5f));
     glm::mat4 rotate;
     glm::mat4 model;
@@ -127,27 +131,27 @@ int main( void ) {
         glUseProgram( program.program );
 
         //Camera::update();
-        field->addVelocity( object.velocityXAmount, object.velocityYAmount, 0,
+        field->addVelocity( object.velocityXAmount, object.velocityYAmount, object.velocityZAmount,
          object.velocityXPos, object.velocityYPos, object.velocityZPos );
         field->addDensity( object.densityAmount, object.densityXPos,
          object.densityYPos, object.densityZPos );
-        field->addDensity( 255, 23, 23, 15 );
-        field->addDensity( 255, 25, 23, 15 );
-        field->addDensity( 255, 26, 23, 15 );
-        field->addDensity( 255, 27, 23, 15 );
-        field->addDensity( 255, 24, 26, 15 );
-        field->addDensity( 255, 25, 26, 15 );
-        field->addDensity( 255, 26, 26, 15 );
-        field->addDensity( 255, 27, 26, 15 );
-        field->addDensity( 255, 24, 24, 15 );
-        field->addDensity( 255, 27, 24, 15 );
-        field->addDensity( 255, 24, 25, 15 );
-        field->addDensity( 255, 27, 25, 15 );
+        field->addDensity( 255, 24, 24, 24 );
+        field->addDensity( 255, 24, 24, 27 );
+        field->addDensity( 255, 27, 24, 24 );
+        field->addDensity( 255, 27, 24, 27 );
+        field->addDensity( 255, 24, 27, 24 );
+        field->addDensity( 255, 24, 27, 27 );
+        field->addDensity( 255, 27, 27, 24 );
+        field->addDensity( 255, 27, 27, 27 );
 
-        field->addVelocity( -100, 100, -100, 25, 25, 15);
-        field->addVelocity( 100, -100, 100, 26, 24, 14);
-        field->addVelocity(-100, -100, -100, 25, 24, 14);
-        field->addVelocity( 100, 100, 100, 26, 26, 15);
+        field->addVelocity(-255, -255, -255, 25, 25, 25);
+        field->addVelocity(-255, -255, 255, 25, 25, 26);
+        field->addVelocity(-255, 255, -255, 25, 26, 25);
+        field->addVelocity(-255, 255, 255, 25, 26, 26);
+        field->addVelocity(255, -255, -255, 26, 25, 25);
+        field->addVelocity(255, -255, 255, 26, 25, 26);
+        field->addVelocity(255, 255, -255, 26, 26, 25);
+        field->addVelocity(255, 255, 255, 26, 26, 26);
         field->update();
 
         GLSL::bufferData(field);
@@ -191,10 +195,10 @@ int main( void ) {
         glDisableVertexAttribArray(program.attribute_velocity_y);
         glDisableVertexAttribArray(program.attribute_velocity_z);
 
-        glBindBuffer( GL_ARRAY_BUFFER, 0 );
-        glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-        glUseProgram ( 0 );
-        glfwSwapBuffers( window );
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        glUseProgram (0);
+        glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
@@ -309,3 +313,7 @@ void initUpdateObject() {
     program.attribute_velocity_z = 0;
     program.uniform_size = 0;
 }
+
+/*void setParams(radius) {
+    if (object.velocityXPos < 1)
+}*/

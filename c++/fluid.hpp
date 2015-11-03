@@ -94,25 +94,34 @@ void Fluid::update() {
 
     //fprintf(stderr, "\n--- Diffuse 1 ---\n");
     diffuse ( 0, s, dens, diffusion );
-    advect ( 0, dens, s, vx, vy );
+    advect ( 0, dens, s, vx, vy );*/
 
-    fprintf(stderr, "\n------ End of Update ------\n");*/
-    fprintf(stderr, "\n------ Start Update ------\n");
-    diffuse(1, vx0, vx, viscosity);
-    diffuse(2, vy0, vy, viscosity);
-    diffuse(3, vz0, vz, viscosity);
+    std::thread d1(&Fluid::diffuse, this, 1, vx0, vx, viscosity);
+    std::thread d2(&Fluid::diffuse, this, 2, vy0, vy, viscosity);
+    std::thread d3(&Fluid::diffuse, this, 3, vz0, vz, viscosity);
+    //diffuse(1, vx0, vx, viscosity);
+    //diffuse(2, vy0, vy, viscosity);
+    //diffuse(3, vz0, vz, viscosity);
+    d1.join();
+    d2.join();
+    d3.join();
 
     project3D (vx0, vy0, vz0, vx, vy);
 
-    advect3D(1, vx, vx0, vx0, vy0, vz0);
+    std::thread a1(&Fluid::advect3D, this, 1, vx, vx0, vx0, vy0, vz0);
+    std::thread a2(&Fluid::advect3D, this, 2, vy, vy0, vx0, vy0, vz0);
+    std::thread a3(&Fluid::advect3D, this, 3, vz, vz0, vx0, vy0, vz0);
+    a1.join();
+    a2.join();
+    a3.join();
+    /*advect3D(1, vx, vx0, vx0, vy0, vz0);
     advect3D(2, vy, vy0, vx0, vy0, vz0);
-    advect3D(3, vz, vz0, vx0, vy0, vz0);
+    advect3D(3, vz, vz0, vx0, vy0, vz0);*/
 
     project3D(vx, vy, vz, vx0, vy0);
 
     diffuse(0, s, dens, diffusion);
     advect3D(0, dens, s, vx, vy, vz);
-    fprintf(stderr, "\n------ End of Update ------\n");
 }
 
 void Fluid::diffuse( int b, float* x, float* x0, float c ) {
@@ -197,7 +206,6 @@ void Fluid::advect( int b, float* d, float* d0, float* u, float* v ) {
 
     int i, j, currentIndex;
 
-    fprintf(stderr, "Entering advection loops....");
     for ( j = 1, jfloat = 1.0f; j <= fieldDimension; j++, jfloat++ ) {
         for ( i = 1, ifloat = 1.0f; i <= fieldDimension; i++, ifloat++ ) {
             currentIndex = IX3D(i,j,1);
@@ -241,12 +249,12 @@ void Fluid::advect( int b, float* d, float* d0, float* u, float* v ) {
                             t1*d0[IX3D(i1i,j1i,1)]);
         }
     }
-    fprintf(stderr, "Finished.\n Entering setBnd()\n");
 
     setBnd(b,d);
 }
 
 void Fluid::advect3D(int b, float* d, float* d0, float* u, float* v, float* w) {
+    //fprintf(stderr, "Starting advect3D\n");
   float i0, i1, j0, j1, k0, k1;
 
   float dtx = dt * fieldDimension;
@@ -306,30 +314,15 @@ void Fluid::advect3D(int b, float* d, float* d0, float* u, float* v, float* w) {
                 int k0i = k0;
                 int k1i = k1;
 
-                if (i0i < 0) i0i = 0;
-                if (i0i > FLUIDSIZE) i0i = FLUIDSIZE;
-                if (i1i < 0) i1i = 0;
-                if (i1i > FLUIDSIZE) i1i = FLUIDSIZE;
-
-                if (j0i < 0) j0i = 0;
-                if (j0i > FLUIDSIZE) j0i = FLUIDSIZE;
-                if (j1i < 0) j1i = 0;
-                if (j1i > FLUIDSIZE) j1i = FLUIDSIZE;
-
-                if (k0i < 0) k0i = 0;
-                if (k0i > FLUIDSIZE) k0i = FLUIDSIZE;
-                if (k1i < 0) j1 = 0;
-                if (k1i > FLUIDSIZE) k1i = FLUIDSIZE;
-
                 d[currentIndex] =
-                s0 * ( t0 * (u0 * d0[IX3D(i0i, j0i, k0i)]
-                +u1 * d0[IX3D(i0i, j0i, k1i)])
-                +( t1 * (u0 * d0[IX3D(i0i, j1i, k0i)]
-                +u1 * d0[IX3D(i0i, j1i, k1i)])))
-                +s1 * ( t0 * (u0 * d0[IX3D(i1i, j0i, k0i)]
-                +u1 * d0[IX3D(i1i, j0i, k1i)])
-                +( t1 * (u0 * d0[IX3D(i1i, j1i, k0i)]
-                +u1 * d0[IX3D(i1i, j1i, k1i)])));
+                    s0 * ( t0 * (u0 * d0[IX3D(i0i, j0i, k0i)]
+                    +u1 * d0[IX3D(i0i, j0i, k1i)])
+                    +( t1 * (u0 * d0[IX3D(i0i, j1i, k0i)]
+                    +u1 * d0[IX3D(i0i, j1i, k1i)])))
+                    +s1 * ( t0 * (u0 * d0[IX3D(i1i, j0i, k0i)]
+                    +u1 * d0[IX3D(i1i, j0i, k1i)])
+                    +( t1 * (u0 * d0[IX3D(i1i, j1i, k0i)]
+                    +u1 * d0[IX3D(i1i, j1i, k1i)])));
             }
         }
     }
@@ -389,8 +382,12 @@ void Fluid::project3D(float* u, float* v, float* w, float* p, float* div) {
     }
   }
 
-  setBnd3D(0, div);
-  setBnd3D(0, p);
+  std::thread s1(&Fluid::setBnd3D, this, 0, div);
+  std::thread s2(&Fluid::setBnd3D, this, 0, p);
+  s1.join();
+  s2.join();
+  //setBnd3D(0, div);
+  //setBnd3D(0, p);
   linSolve3D(0, p, div, 1, 6);
 
   for (int k = 1; k <= n; k++) {
@@ -408,9 +405,15 @@ void Fluid::project3D(float* u, float* v, float* w, float* p, float* div) {
     }
   }
 
-  setBnd3D(1, u);
-  setBnd3D(2, v);
-  setBnd3D(3, w);
+  std::thread s3(&Fluid::setBnd3D, this, 1, u);
+  std::thread s4(&Fluid::setBnd3D, this, 2, v);
+  std::thread s5(&Fluid::setBnd3D, this, 3, w);
+  s3.join();
+  s4.join();
+  s5.join();
+  //setBnd3D(1, u);
+  //setBnd3D(2, v);
+  //setBnd3D(3, w);
 }
 
 void Fluid::setBnd(int b, float* x) {

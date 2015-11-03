@@ -9,6 +9,7 @@
 
 namespace GLSL {
     GLuint  loadShaders( const std::string&, const std::string& );
+    GLuint  loadShadersGeom(const std::string&, const std::string&, const std::string&);
     void    initShaderVars();
     char*   textFileRead( const char* );
     void    initVBO();
@@ -81,6 +82,100 @@ GLuint GLSL::loadShaders( const std::string &vertShader, const std::string &frag
 
     if ( !rc ) {
         printf("Error linking shaders %s and %s\n", vertShader.c_str(), fragShader.c_str());
+        return false;
+    }
+
+    glUseProgram( prog );
+
+    fprintf(stderr, "Successfully installed shaders\n");
+    return prog;
+}
+
+GLuint GLSL::loadShadersGeom( const std::string &vertShader, const std::string &geomShader, const std::string &fragShader ) {
+    fprintf(stderr, "Installing shaders...\n");
+    GLuint prog, vao;
+    GLint rc, err;
+
+    glGenVertexArrays( 1, &vao );
+    assert( glGetError() == GLEW_OK );
+    glBindVertexArray( vao );
+    assert( glGetError() == GLEW_OK );
+
+    fprintf( stderr, "Creating shader programs..." );
+    GLuint VS = glCreateShader(GL_VERTEX_SHADER);
+    GLuint GS = glCreateShader(GL_GEOMETRY_SHADER);
+    GLuint FS = glCreateShader(GL_FRAGMENT_SHADER);
+    fprintf( stderr, "Completed\n" );
+
+    fprintf( stderr, "Reading shader files..." );
+    const char* vshader = textFileRead(vertShader.c_str());
+    const char* gshader = textFileRead(geomShader.c_str());
+    const char* fshader = textFileRead(fragShader.c_str());
+    fprintf( stderr, "Completed\n" );
+
+    glShaderSource(VS, 1, &vshader, NULL);
+    glShaderSource(GS, 1, &gshader, NULL);
+    glShaderSource(FS, 1, &fshader, NULL);
+
+    glCompileShader(VS);
+    glGetShaderiv(VS, GL_COMPILE_STATUS, &rc);
+    glGetShaderiv( VS, GL_INFO_LOG_LENGTH, &err );
+
+    if ( !rc ) {
+        printf("Error compiling vertex shader %s\n", vertShader.c_str());
+        if ( err > 1 ) {
+            GLchar* log_string = new char[err + 1];
+            glGetShaderInfoLog( VS, err, 0, log_string );
+            std::cout << "Log found  \n" << log_string << std::endl;
+
+            delete log_string;
+        }
+        return false;
+    }
+
+    glCompileShader(GS);
+    glGetShaderiv(GS, GL_COMPILE_STATUS, &rc);
+    glGetShaderiv( GS, GL_INFO_LOG_LENGTH, &err );
+
+    if ( !rc ) {
+        printf("Error compiling vertex shader %s\n", geomShader.c_str());
+        if ( err > 1 ) {
+            GLchar* log_string = new char[err + 1];
+            glGetShaderInfoLog( GS, err, 0, log_string );
+            std::cout << "Log found  \n" << log_string << std::endl;
+
+            delete log_string;
+        }
+        return false;
+    }
+
+    glCompileShader(FS);
+    glGetShaderiv(FS, GL_COMPILE_STATUS, &rc);
+    glGetShaderiv( FS, GL_INFO_LOG_LENGTH, &err );
+
+    if ( !rc ) {
+        printf("Error compiling fragment shader %s\n", fragShader.c_str());
+        if ( err > 1 ) {
+            GLchar* log_string = new char[err + 1];
+            glGetShaderInfoLog( FS, err, 0, log_string );
+            std::cout << "Log found  \n" << log_string << std::endl;
+
+            delete log_string;
+        }
+        return false;
+    }
+
+    prog = glCreateProgram();
+    glAttachShader(prog, VS);
+    glAttachShader(prog, GS);
+    glAttachShader(prog, FS);
+    glBindFragDataLocation( prog, 0, "fragcolor" );
+    glLinkProgram(prog);
+    glGetProgramiv(prog, GL_LINK_STATUS, &rc);
+
+    if ( !rc ) {
+        printf("Error linking shaders %s, %s, and %s\n", vertShader.c_str(),
+         geomShader.c_str(), fragShader.c_str());
         return false;
     }
 
@@ -167,7 +262,9 @@ void GLSL::initArrays() {
                 program.vertex_array[count*3+1] = (GLfloat)((j+1.f-0.5f)/FLUIDSIZE);
                 program.vertex_array[count*3+2] = (GLfloat)((k+1.f-0.5f)/FLUIDSIZE);
                 program.index_array[count] = count; //Simply references the current
-                program.density_array[count] = 0.f;
+                //if (j < FLUIDSIZE/2)
+                program.density_array[count] = 255.f;
+                //else program.density_array[count] = 0.f;
                 program.velocity_x_array[count] = 0.f;
                 program.velocity_y_array[count] = 0.f;
                 program.velocity_z_array[count] = 0.f;
@@ -230,7 +327,7 @@ void GLSL::bufferData(Fluid* field) {
     float* vz = field->getZVelocity();
     float* d = field->getDensity();
     int i, j, k, count = 0, currentIndex;
-    float highestx = 0, highesty = 0, highestz = 0;
+    float highestx = 0, highesty = 0, highestz = 0, highestDensity = 0;
 
     for (k = 1; k <= FLUIDSIZE; k++) {
         for ( j = 1; j <= FLUIDSIZE; j++ ) {
@@ -240,6 +337,10 @@ void GLSL::bufferData(Fluid* field) {
                 program.velocity_y_array[count] = vy[currentIndex];
                 program.velocity_z_array[count] = vz[currentIndex];
                 program.density_array[count] = d[currentIndex];
+                /*if (vy[currentIndex] > highestDensity) {
+                    highestDensity = vy[currentIndex];
+                    fprintf(stderr, "%f\n", highestDensity);
+                }*/
             }
         }
     }
