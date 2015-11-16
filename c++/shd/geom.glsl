@@ -6,45 +6,45 @@ layout(points, max_vertices = 6) out;
 in vec3 velocity[];
 in float density[];
 
+uniform mat4 proj_matrix;
+uniform mat4 view_matrix;
+uniform mat4 model_matrix;
+
 out vec3 vVel;
 out float vDens;
 
 const float PI = 3.1415926;
 
 void main() {
+    vec4 tempPos;
+
     vVel = velocity[0];
     vDens = density[0];
-    gl_PointSize = 2;
-
-    gl_Position = gl_in[0].gl_Position + vec4(0.000001, 0.0, 0.0, 1.0);
+    gl_PointSize = 4;
+//------ old constant was 0.000001 ------
+    tempPos = gl_in[0].gl_Position + vec4(0.0000000001, 0.0, 0.0, 1.0);
+    gl_Position = proj_matrix * view_matrix * model_matrix * tempPos;
     EmitVertex();
 
-    gl_Position = gl_in[0].gl_Position + vec4(-0.000001, 0.0, 0.0, 1.0);
+    tempPos = gl_in[0].gl_Position + vec4(-0.0000000001, 0.0, 0.0, 1.0);
+    gl_Position = proj_matrix * view_matrix * model_matrix * tempPos;
     EmitVertex();
 
-    gl_Position = gl_in[0].gl_Position + vec4(0.0, 0.000001, 0.0, 1.0);
+    tempPos = gl_in[0].gl_Position + vec4(0.0, 0.0000000001, 0.0, 1.0);
+    gl_Position = proj_matrix * view_matrix * model_matrix * tempPos;
     EmitVertex();
 
-    gl_Position = gl_in[0].gl_Position + vec4(0.0, -0.000001, 0.0, 1.0);
+    tempPos = gl_in[0].gl_Position + vec4(0.0, -0.0000000001, 0.0, 1.0);
+    gl_Position = proj_matrix * view_matrix * model_matrix * tempPos;
     EmitVertex();
 
-    gl_Position = gl_in[0].gl_Position + vec4(0.0, 0.0, 0.000001, 1.0);
+    tempPos = gl_in[0].gl_Position + vec4(0.0, 0.0, 0.0000000001, 1.0);
+    gl_Position = proj_matrix * view_matrix * model_matrix * tempPos;
     EmitVertex();
 
-    gl_Position = gl_in[0].gl_Position + vec4(0.0, 0.0, -0.000001, 1.0);
+    tempPos = gl_in[0].gl_Position + vec4(0.0, 0.0, -0.00000001, 1.0);
+    gl_Position = proj_matrix * view_matrix * model_matrix * tempPos;
     EmitVertex();
-    /*for (int i = 0; i <= 10; i++) {
-        // Angle between each side in radians
-        float ang = PI * 2.0 / 10.0 * i;
-
-        // Offset from center of point (0.3 to accomodate for aspect ratio)
-        vec4 offset = vec4(cos(ang) * 0.0003, -sin(ang) * 0.0004, 0.0, 0.0);
-        gl_Position = gl_in[0].gl_Position + offset;
-
-        EmitVertex();
-    }*/
-
-    //EndPrimitive();
 
     EndPrimitive();
 }

@@ -15,7 +15,7 @@ void main () {
     vec2 b = normalize(vec2(vDens, vVel.z));
     //x = vec3(r.y, g.y, b.y);
 
-    if (vDens/25.0 > 0.05) fragcolor = vec4( x, 1.0 );
+    if (vDens/25.0 > 0.15) fragcolor = vec4( x, vDens/25.0 );
     //fragcolor = vec4( x, vDens/255.0 );
     else discard;
 }

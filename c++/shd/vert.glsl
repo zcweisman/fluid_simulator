@@ -29,10 +29,11 @@ void main() {
     float z = (vertex_position.z*2.0-1.0)+((vertex_velocity_z/mag)/field_dimension)*2;
 
     vec4 vector = vec4(x, y, z, 1.0);
-    vec4 pos = proj_matrix*view_matrix*model_matrix*vector;
+    //vec4 pos = proj_matrix*view_matrix*model_matrix*vector;
 
     density = vertex_density;
     velocity = vec3(vertex_velocity_x, vertex_velocity_y, vertex_velocity_z);
 
-    gl_Position = vec4(pos.xyz, 1.0);
+    //gl_Position = vec4(pos.xyz, 1.0);
+    gl_Position = vec4(x, y, z, 1.0);
 }

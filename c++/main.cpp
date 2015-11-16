@@ -32,7 +32,7 @@ static void key_callback( GLFWwindow*, int, int, int, int );
 static void error_callback( int, const char* );
 static void cursor_position_callback( GLFWwindow*, double, double );
 static void mouse_click_callback( GLFWwindow*, int, int, int );
-static float angle = 0.f, zoom = 0.85f;
+static float angle = 0.f, zoom = 0.55f;
 
 #include "camera.hpp"
 #include "glsl.hpp"
@@ -78,7 +78,10 @@ int main( void ) {
         fprintf( stderr, "Failed to initialize GLEW\n" );
         return -1;
     }
-    std::cout << "Normal error <" << glGetError() << "> please ignore\n";
+    std::cout << "Normal error <" << glGetError() << "> please ignore\n\n";
+
+    char* gpu = (char*)glGetString(GL_RENDERER);
+    fprintf(stderr, "GPU being used: %s\n", gpu);
 
     glClearColor( 0.1, 0.45, 0.5, 1.0 );
 
@@ -92,9 +95,9 @@ int main( void ) {
      */
     field->setTimeStep(0.1);
     //field->setViscosity(0.05); // Viscosity of water
-    field->setDiffuse(0.005);
-    field->setViscosity(0.5);
-    field->setIterations(15);
+    field->setDiffuse(0.005); //0.005
+    field->setViscosity(0.005); //0.5
+    field->setIterations(10);
 
     std::cout << "Completed\n";
 
@@ -135,15 +138,15 @@ int main( void ) {
          object.velocityXPos, object.velocityYPos, object.velocityZPos );
         field->addDensity( object.densityAmount, object.densityXPos,
          object.densityYPos, object.densityZPos );
-        field->addDensity( 255, 25, 2, 25 );
-        field->addDensity( 255, 25, 2, 26 );
-        field->addDensity( 255, 26, 2, 25 );
-        field->addDensity( 255, 26, 2, 26 );
+        field->addDensity(255, FLUIDSIZE/2, FLUIDSIZE/2, FLUIDSIZE/2);
+        field->addDensity(255, FLUIDSIZE/2, FLUIDSIZE/2, FLUIDSIZE/2+1);
+        field->addDensity(255, FLUIDSIZE/2, FLUIDSIZE/2+1, FLUIDSIZE/2);
+        field->addDensity(255, FLUIDSIZE/2, FLUIDSIZE/2+1, FLUIDSIZE/2+1);
 
-        field->addVelocity(0, 255, 0, 25, 1, 25);
-        field->addVelocity(0, 255, 0, 25, 1, 26);
-        field->addVelocity(0, 255, 0, 26, 1, 25);
-        field->addVelocity(0, 255, 0, 26, 1, 26);
+        field->addVelocity(255, 0, 0, FLUIDSIZE/2-1, FLUIDSIZE/2-1, FLUIDSIZE/2-1);
+        field->addVelocity(255, 0, 0, FLUIDSIZE/2-1, FLUIDSIZE/2-1, FLUIDSIZE/2+2);
+        field->addVelocity(255, 0, 0, FLUIDSIZE/2-1, FLUIDSIZE/2+2, FLUIDSIZE/2-1);
+        field->addVelocity(255, 0, 0, FLUIDSIZE/2-1, FLUIDSIZE/2+2, FLUIDSIZE/2+2);
         field->update();
 
         GLSL::bufferData(field);
@@ -209,8 +212,8 @@ int main( void ) {
 
 static void key_callback(GLFWwindow* window, int key, int scancode,
 int action, int mods) {
-            if (key == GLFW_KEY_A) angle -= 2.5f;
-            if (key == GLFW_KEY_D) angle += 2.5f;
+            if (key == GLFW_KEY_A) angle -= 0.25f;
+            if (key == GLFW_KEY_D) angle += 0.25f;
             if (key == GLFW_KEY_W) {
                 if (object.mouseZPos+1 <= FLUIDSIZE)
                     object.mouseZPos++;
