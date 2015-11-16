@@ -8,16 +8,15 @@
 #define _GLSL_HPP_
 
 namespace GLSL {
-    GLuint  loadShaders( const std::string&, const std::string& );
+    char*   textFileRead(const char*);
+    GLuint  loadShaders(const std::string&, const std::string&);
     GLuint  loadShadersGeom(const std::string&, const std::string&, const std::string&);
     void    initShaderVars();
-    char*   textFileRead( const char* );
     void    initVBO();
     void    bufferData(Fluid*);
     void    initArrays();
 }
 
-//Done - No GL Errors
 GLuint GLSL::loadShaders( const std::string &vertShader, const std::string &fragShader ) {
     fprintf(stderr, "Installing shaders...\n");
     GLuint prog, vao;
@@ -29,8 +28,8 @@ GLuint GLSL::loadShaders( const std::string &vertShader, const std::string &frag
     assert( glGetError() == GLEW_OK );
 
     fprintf( stderr, "Creating shader programs..." );
-    GLuint VS = glCreateShader( GL_VERTEX_SHADER );
-    GLuint FS = glCreateShader( GL_FRAGMENT_SHADER );
+    GLuint VS = glCreateShader(GL_VERTEX_SHADER);
+    GLuint FS = glCreateShader(GL_FRAGMENT_SHADER);
     fprintf( stderr, "Completed\n" );
 
     fprintf( stderr, "Reading shader files..." );
@@ -185,51 +184,52 @@ GLuint GLSL::loadShadersGeom( const std::string &vertShader, const std::string &
     return prog;
 }
 
-//Done - No GL Errors
 void GLSL::initShaderVars() {
-    glUseProgram( program.program );
+    glUseProgram(program.program[FRAMEBUFFER]);
     program.attribute_vertex = glGetAttribLocation(
-        program.program, "vertex_position"
+        program.program[FRAMEBUFFER], "vertex_position"
     );
-    std::cout << "Vertex Attribute Shader Address: " << program.attribute_vertex
-        << std::endl;
 
     program.attribute_density = glGetAttribLocation(
-        program.program, "vertex_density"
+        program.program[FRAMEBUFFER], "vertex_density"
     );
-    std::cout << "Density Attribute Shader Address: " << program.attribute_density
-        << std::endl;
 
     program.attribute_velocity_x = glGetAttribLocation(
-        program.program, "vertex_velocity_x"
+        program.program[FRAMEBUFFER], "vertex_velocity_x"
     );
-    std::cout << "X Velocity Attribute Shader Address: " << program.attribute_velocity_x
-        << std::endl;
 
     program.attribute_velocity_y = glGetAttribLocation(
-        program.program, "vertex_velocity_y"
+        program.program[FRAMEBUFFER], "vertex_velocity_y"
     );
     program.attribute_velocity_z = glGetAttribLocation(
-      program.program, "vertex_velocity_z"
+      program.program[FRAMEBUFFER], "vertex_velocity_z"
     );
-    std::cout << "Y Velocity Attribute Shader Address: " << program.attribute_velocity_y
-        << std::endl;
 
     program.uniform_view_matrix = glGetUniformLocation(
-      program.program, "view_matrix"
+      program.program[FRAMEBUFFER], "view_matrix"
     );
     program.uniform_proj_matrix = glGetUniformLocation(
-      program.program, "proj_matrix"
+      program.program[FRAMEBUFFER], "proj_matrix"
     );
     program.uniform_model_matrix = glGetUniformLocation(
-      program.program, "model_matrix"
+      program.program[FRAMEBUFFER], "model_matrix"
     );
     program.uniform_size = glGetUniformLocation(
-        program.program, "field_dimension"
+        program.program[FRAMEBUFFER], "field_dimension"
     );
+
+    /*glUseProgram(program.program[BLUR]);
+
+    program.attribute_tex_vertex = glGetAttribLocation(
+        program.program[BLUR], "vertex_position"
+    );
+
+    program.uniform_sampler = glGetUniformLocation(
+        program.program[BLUR], "frame"
+    );*/
 }
 
-char* GLSL::textFileRead( const char* fn ) {
+char* GLSL::textFileRead(const char* fn) {
     FILE *fp;
     char *content = NULL;
     int count = 0;
@@ -275,7 +275,7 @@ void GLSL::initArrays() {
 }
 
 void GLSL::initVBO() {
-    glUseProgram( program.program );
+    glUseProgram(program.program[FRAMEBUFFER]);
 
     // Initialize vertex array
     glGenBuffers( 1, &(program.vbo) );
@@ -345,6 +345,7 @@ void GLSL::bufferData(Fluid* field) {
         }
     }
 
+    glUseProgram(program.program[FRAMEBUFFER]);
     glBindBuffer( GL_ARRAY_BUFFER, program.dbo );
     glBufferData( GL_ARRAY_BUFFER, sizeof( program.density_array ),
      program.density_array, GL_STATIC_DRAW );

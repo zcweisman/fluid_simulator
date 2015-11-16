@@ -32,7 +32,7 @@ static void key_callback( GLFWwindow*, int, int, int, int );
 static void error_callback( int, const char* );
 static void cursor_position_callback( GLFWwindow*, double, double );
 static void mouse_click_callback( GLFWwindow*, int, int, int );
-static float angle = 0.f, zoom = 0.55f;
+static float angle = 0.f, zoom = 0.25f;
 
 #include "camera.hpp"
 #include "glsl.hpp"
@@ -102,15 +102,25 @@ int main( void ) {
     std::cout << "Completed\n";
 
     std::cout << "Installing shaders...";
-    //program.program = GLSL::loadShaders("shd/vert.glsl", "shd/frag.glsl");
-    program.program = GLSL::loadShadersGeom("shd/vert.glsl", "shd/geom.glsl", "shd/frag.glsl");
+    //program.program[BLUR] = GLSL::loadShaders("shd/poisson.vert", "shd/poisson.frag");
+    program.program[FRAMEBUFFER] = GLSL::loadShadersGeom("shd/vert.glsl", "shd/geom.glsl", "shd/frag.glsl");
     std::cout << "Completed\n";
+
+    //Here
+    //program.quad_vertex_array[] =
+    /*glGenFramebuffers(1, &program.frameBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, program.frameBuffer);
+    glGenTextures(1, &program.texture);
+    glBindTexture(GL_TEXTURE_2D, program.texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowHeight, windowWidth, 0,
+        GL_RGB, GL_UNSIGNED_BYTE, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);*/
+    //To here
 
     GLSL::initShaderVars();
     GLSL::initArrays();
     GLSL::initVBO();
-
-    //Environment::addObstacle();
 
     glEnable(GL_PROGRAM_POINT_SIZE);
     glEnable(GL_DEPTH_TEST);
@@ -131,22 +141,22 @@ int main( void ) {
     while (!glfwWindowShouldClose(window)) {
         //Pass the simulator system updates
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glUseProgram( program.program );
+        glUseProgram(program.program[FRAMEBUFFER]);
 
         //Camera::update();
         field->addVelocity( object.velocityXAmount, object.velocityYAmount, object.velocityZAmount,
          object.velocityXPos, object.velocityYPos, object.velocityZPos );
         field->addDensity( object.densityAmount, object.densityXPos,
          object.densityYPos, object.densityZPos );
-        field->addDensity(255, FLUIDSIZE/2, FLUIDSIZE/2, FLUIDSIZE/2);
-        field->addDensity(255, FLUIDSIZE/2, FLUIDSIZE/2, FLUIDSIZE/2+1);
-        field->addDensity(255, FLUIDSIZE/2, FLUIDSIZE/2+1, FLUIDSIZE/2);
-        field->addDensity(255, FLUIDSIZE/2, FLUIDSIZE/2+1, FLUIDSIZE/2+1);
+        field->addDensity(255, FLUIDSIZE/2+object.cursorXOffset, FLUIDSIZE/2, FLUIDSIZE/2);
+        field->addDensity(255, FLUIDSIZE/2+object.cursorXOffset, FLUIDSIZE/2, FLUIDSIZE/2+1);
+        field->addDensity(255, FLUIDSIZE/2+object.cursorXOffset, FLUIDSIZE/2+1, FLUIDSIZE/2);
+        field->addDensity(255, FLUIDSIZE/2+object.cursorXOffset, FLUIDSIZE/2+1, FLUIDSIZE/2+1);
 
-        field->addVelocity(255, 0, 0, FLUIDSIZE/2-1, FLUIDSIZE/2-1, FLUIDSIZE/2-1);
-        field->addVelocity(255, 0, 0, FLUIDSIZE/2-1, FLUIDSIZE/2-1, FLUIDSIZE/2+2);
-        field->addVelocity(255, 0, 0, FLUIDSIZE/2-1, FLUIDSIZE/2+2, FLUIDSIZE/2-1);
-        field->addVelocity(255, 0, 0, FLUIDSIZE/2-1, FLUIDSIZE/2+2, FLUIDSIZE/2+2);
+        field->addVelocity(255, 0, 0, FLUIDSIZE/2-1+object.cursorXOffset, FLUIDSIZE/2-1, FLUIDSIZE/2-1);
+        field->addVelocity(255, 0, 0, FLUIDSIZE/2-1+object.cursorXOffset, FLUIDSIZE/2-1, FLUIDSIZE/2+2);
+        field->addVelocity(255, 0, 0, FLUIDSIZE/2-1+object.cursorXOffset, FLUIDSIZE/2+2, FLUIDSIZE/2-1);
+        field->addVelocity(255, 0, 0, FLUIDSIZE/2-1+object.cursorXOffset, FLUIDSIZE/2+2, FLUIDSIZE/2+2);
         field->update();
 
         GLSL::bufferData(field);
@@ -156,19 +166,24 @@ int main( void ) {
         glVertexAttribPointer( program.attribute_vertex, 3, GL_FLOAT, GL_FALSE, 0, (void*)0 );
 
         // Enable density array
-        glEnableVertexAttribArray( program.attribute_density ); //Problem
+        glEnableVertexAttribArray( program.attribute_density );
         glBindBuffer( GL_ARRAY_BUFFER, program.dbo );
-        glVertexAttribPointer( program.attribute_density, 1, GL_FLOAT, GL_FALSE, 0, (void*)0 ); //Problem
+        glVertexAttribPointer( program.attribute_density, 1, GL_FLOAT, GL_FALSE, 0, (void*)0 );
 
         // Enable velocity array
         glEnableVertexAttribArray( program.attribute_velocity_x );
         glBindBuffer( GL_ARRAY_BUFFER, program.velxbo );
-        glVertexAttribPointer( program.attribute_velocity_x, 1, GL_FLOAT, GL_FALSE, 0, (void*)0 ); //Problem
+        glVertexAttribPointer( program.attribute_velocity_x, 1, GL_FLOAT, GL_FALSE, 0, (void*)0 );
 
         // Enable velocity array
         glEnableVertexAttribArray( program.attribute_velocity_y );
         glBindBuffer( GL_ARRAY_BUFFER, program.velybo );
-        glVertexAttribPointer( program.attribute_velocity_y, 1, GL_FLOAT, GL_FALSE, 0, (void*)0 ); //Problem
+        glVertexAttribPointer( program.attribute_velocity_y, 1, GL_FLOAT, GL_FALSE, 0, (void*)0 );
+
+        // Enable velocity array
+        glEnableVertexAttribArray(program.attribute_velocity_z);
+        glBindBuffer(GL_ARRAY_BUFFER, program.velzbo);
+        glVertexAttribPointer(program.attribute_velocity_z, 1, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
         rotate = glm::rotate(glm::mat4(1.f), angle, glm::vec3(0.f, 1.f, 0.f));
         model = translate*scale*rotate;
@@ -179,9 +194,10 @@ int main( void ) {
         glUniformMatrix4fv(program.uniform_proj_matrix, 1, GL_FALSE, glm::value_ptr(projection));
         glUniformMatrix4fv(program.uniform_view_matrix, 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(program.uniform_model_matrix, 1, GL_FALSE, glm::value_ptr(model));
+        //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, program.texture, 0);
 
         assert(glGetError() == GL_NO_ERROR);
-        glDrawElements( GL_POINTS, FLUIDSIZE*FLUIDSIZE*FLUIDSIZE, GL_UNSIGNED_INT, 0 );
+        glDrawElements(GL_POINTS, FLUIDSIZE*FLUIDSIZE*FLUIDSIZE, GL_UNSIGNED_INT, 0);
         assert(glGetError() == GL_NO_ERROR);
 
         glDisableVertexAttribArray(program.attribute_vertex);
@@ -192,11 +208,24 @@ int main( void ) {
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+        //Here
+        /*GLuint quad_vertexbuffer;
+        glGenBuffers(1, &quad_vertexbuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, quad_vertexbuffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(program.quad_vertex_array), program.quad_vertex_array, GL_STATIC_DRAW);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glViewport(0, 0, windowWidth, windowHeight);
+        glUseProgram(program.program[BLUR]);
+        glDrawArrays(GL_TRIANGLES, 0, 6);*/
+        //To here
         glUseProgram (0);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
+    glDeleteFramebuffers(1, &program.frameBuffer);
     glDeleteBuffers(1, &program.vbo);
     glDeleteBuffers(1, &program.ibo);
     glDeleteBuffers(1, &program.velxbo);
@@ -224,6 +253,8 @@ int action, int mods) {
             }
             if (key == GLFW_KEY_UP) zoom += 0.05;
             if (key == GLFW_KEY_DOWN) zoom -= 0.05;
+            if (key == GLFW_KEY_Q) object.cursorXOffset--;
+            if (key == GLFW_KEY_E) object.cursorXOffset++;
 }
 
 static void error_callback(int error, const char* description) {
@@ -302,15 +333,13 @@ void initUpdateObject() {
     object.mouseYPos0       = 0;
     object.mouseZPos        = 1;
     object.mouseZPos0       = 1;
+    object.cursorXOffset    = 0;
 
-    program.attribute_vertex = 0; // References location of attrib in shader
-    program.attribute_density = 0;
-    program.attribute_velocity_x = 0;
-    program.attribute_velocity_y = 0;
-    program.attribute_velocity_z = 0;
-    program.uniform_size = 0;
+    program.frameBuffer             = 0;
+    program.attribute_vertex        = 0;
+    program.attribute_density       = 0;
+    program.attribute_velocity_x    = 0;
+    program.attribute_velocity_y    = 0;
+    program.attribute_velocity_z    = 0;
+    program.uniform_size            = 0;
 }
-
-/*void setParams(radius) {
-    if (object.velocityXPos < 1)
-}*/

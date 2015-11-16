@@ -1,12 +1,21 @@
 #ifndef _STRUCTS_H_
 #define _STRUCTS_H_
 
+enum {FRAMEBUFFER, BLUR, NUM_PROGRAMS};
+
 // Use only for programs with 1 set of shaders and 1 vbo
 typedef struct Program {
     // GL program reference
-    GLuint      program;
+    GLuint      program[NUM_PROGRAMS];
 
     // Vertex arrays
+    GLfloat quad_vertex_array[18] = {-1.0f, -1.0f, 0.0f,
+                                        1.0f, -1.0f, 0.0f,
+                                        -1.0f, 1.0f, 0.0f,
+                                        -1.0f, 1.0f, 0.0f,
+                                        1.0f, -1.0f, 0.0f,
+                                        -1.0f, 1.0f, 0.0f
+                                        };
     GLfloat     vertex_array[FLUIDSIZE*FLUIDSIZE*FLUIDSIZE*3];
     GLfloat     velocity_x_array[FLUIDSIZE*FLUIDSIZE*FLUIDSIZE];
     GLfloat     velocity_y_array[FLUIDSIZE*FLUIDSIZE*FLUIDSIZE];
@@ -16,6 +25,9 @@ typedef struct Program {
     bool        locked_index_array[FLUIDSIZE*FLUIDSIZE*FLUIDSIZE];
 
     // Buffer objects
+    GLuint      frameBuffer;
+    GLuint      texture;
+    GLuint      fvbo;
     GLuint      velxbo;
     GLuint      velybo;
     GLuint      velzbo;
@@ -24,6 +36,7 @@ typedef struct Program {
     GLuint      ibo;
 
     // Shader references
+    GLint       attribute_tex_vertex;
     GLint       attribute_vertex;
     GLint       attribute_density;
     GLint       attribute_velocity_x;
@@ -33,6 +46,7 @@ typedef struct Program {
     GLint       uniform_model_matrix;
     GLint       uniform_view_matrix;
     GLint       uniform_proj_matrix;
+    GLint       uniform_sampler;
     bool        mouse_click;
 } GLProgram;
 
@@ -58,6 +72,8 @@ typedef struct Object {
     int     mouseYPos0;
     int     mouseZPos;
     int     mouseZPos0;
+
+    int     cursorXOffset;
 } UpdateObject;
 
 #endif

@@ -14,19 +14,11 @@ uniform mat4 proj_matrix;
 uniform mat4 view_matrix;
 uniform mat4 model_matrix;
 
-float norm2D(float x, float y) {
-    return sqrt(x*x + y*y);
-}
-
-float norm3D(float x, float y, float z) {
-  return sqrt(x*x + y*y + z*z);
-}
-
 void main() {
-    float mag = norm3D(vertex_velocity_x, vertex_velocity_y, vertex_velocity_z);
-    float x = (vertex_position.x*2.0-1.0)+((vertex_velocity_x/mag)/field_dimension)*2;
-    float y = (vertex_position.y*2.0-1.0)+((vertex_velocity_y/mag)/field_dimension)*2;
-    float z = (vertex_position.z*2.0-1.0)+((vertex_velocity_z/mag)/field_dimension)*2;
+    vec3 mag = normalize(vec3(vertex_velocity_x, vertex_velocity_y, vertex_velocity_z));
+    float x = (vertex_position.x*2.0-1.0)+((vertex_velocity_x/mag.x)/field_dimension)*2;
+    float y = (vertex_position.y*2.0-1.0)+((vertex_velocity_y/mag.y)/field_dimension)*2;
+    float z = (vertex_position.z*2.0-1.0)+((vertex_velocity_z/mag.z)/field_dimension)*2;
 
     vec4 vector = vec4(x, y, z, 1.0);
     //vec4 pos = proj_matrix*view_matrix*model_matrix*vector;
