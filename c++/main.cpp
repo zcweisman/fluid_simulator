@@ -14,7 +14,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#define FLUIDSIZE 55
+#define FLUIDSIZE 60
 
 #include "structs.h"
 
@@ -32,7 +32,6 @@ static void key_callback( GLFWwindow*, int, int, int, int );
 static void error_callback( int, const char* );
 static void cursor_position_callback( GLFWwindow*, double, double );
 static void mouse_click_callback( GLFWwindow*, int, int, int );
-static float angle = 0.f, zoom = 0.25f;
 
 #include "camera.hpp"
 #include "glsl.hpp"
@@ -51,11 +50,11 @@ int main( void ) {
     fprintf(stderr, "Initializeing GLFW...");
     if ( !glfwInit() ) exit(EXIT_FAILURE);
 
-    glfwWindowHint( GLFW_SAMPLES, 4 );
-    glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 3 );
-    glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 2 );
-    glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE );
-    glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
+    glfwWindowHint(GLFW_SAMPLES, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     windowHeight    = 768;
     windowWidth     = 768;
@@ -65,7 +64,7 @@ int main( void ) {
 
     if ( !window ) { glfwTerminate(); exit( EXIT_FAILURE ); }
 
-    glfwMakeContextCurrent( window );
+    glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
     glfwSetKeyCallback(window, key_callback);
     glfwSetCursorPosCallback(window, cursor_position_callback);
@@ -85,21 +84,8 @@ int main( void ) {
 
     glClearColor( 0.1, 0.45, 0.5, 1.0 );
 
-    std::cout << "Initialzing fluid field...";
 
     field = new Fluid(FLUIDSIZE, windowWidth);
-    //field->setDiffuse(0.5);
-    /*
-     * For 150^2 , use density and viscosity of 0.05, timestep of 0.0001.
-     *
-     */
-    field->setTimeStep(0.1);
-    //field->setViscosity(0.05); // Viscosity of water
-    field->setDiffuse(0.005); //0.005
-    field->setViscosity(0.005); //0.5
-    field->setIterations(10);
-
-    std::cout << "Completed\n";
 
     std::cout << "Installing shaders...";
     //program.program[BLUR] = GLSL::loadShaders("shd/poisson.vert", "shd/poisson.frag");
@@ -133,32 +119,17 @@ int main( void ) {
     int count = 0;
     glm::mat4 view = glm::mat4(1.f);
     glm::mat4 projection = glm::perspective(80.f, 1.f, 0.1f, 100.f);
-    glm::mat4 scale = glm::scale(glm::mat4(1.f), glm::vec3(zoom, zoom, zoom));
-    glm::mat4 translate = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, -0.5f));
+    glm::mat4 scale;
+    glm::mat4 translate;
     glm::mat4 rotate;
     glm::mat4 model;
 
     while (!glfwWindowShouldClose(window)) {
-        //Pass the simulator system updates
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glUseProgram(program.program[FRAMEBUFFER]);
 
         //Camera::update();
-        field->addVelocity( object.velocityXAmount, object.velocityYAmount, object.velocityZAmount,
-         object.velocityXPos, object.velocityYPos, object.velocityZPos );
-        field->addDensity( object.densityAmount, object.densityXPos,
-         object.densityYPos, object.densityZPos );
-        field->addDensity(255, FLUIDSIZE/2+object.cursorXOffset, FLUIDSIZE/2, FLUIDSIZE/2);
-        field->addDensity(255, FLUIDSIZE/2+object.cursorXOffset, FLUIDSIZE/2, FLUIDSIZE/2+1);
-        field->addDensity(255, FLUIDSIZE/2+object.cursorXOffset, FLUIDSIZE/2+1, FLUIDSIZE/2);
-        field->addDensity(255, FLUIDSIZE/2+object.cursorXOffset, FLUIDSIZE/2+1, FLUIDSIZE/2+1);
-
-        field->addVelocity(255, 0, 0, FLUIDSIZE/2-1+object.cursorXOffset, FLUIDSIZE/2-1, FLUIDSIZE/2-1);
-        field->addVelocity(255, 0, 0, FLUIDSIZE/2-1+object.cursorXOffset, FLUIDSIZE/2-1, FLUIDSIZE/2+2);
-        field->addVelocity(255, 0, 0, FLUIDSIZE/2-1+object.cursorXOffset, FLUIDSIZE/2+2, FLUIDSIZE/2-1);
-        field->addVelocity(255, 0, 0, FLUIDSIZE/2-1+object.cursorXOffset, FLUIDSIZE/2+2, FLUIDSIZE/2+2);
-        field->update();
-
+        Environment::setParams(field);
         GLSL::bufferData(field);
 
         glEnableVertexAttribArray( program.attribute_vertex );
@@ -185,7 +156,9 @@ int main( void ) {
         glBindBuffer(GL_ARRAY_BUFFER, program.velzbo);
         glVertexAttribPointer(program.attribute_velocity_z, 1, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-        rotate = glm::rotate(glm::mat4(1.f), angle, glm::vec3(0.f, 1.f, 0.f));
+        rotate = glm::rotate(glm::mat4(1.f), object.angle, glm::vec3(0.f, 1.f, 0.f));
+        scale = glm::scale(glm::mat4(1.f), glm::vec3(object.zoom, object.zoom, object.zoom));
+        translate = glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, -0.5f));
         model = translate*scale*rotate;
 
         //Bind the index array
@@ -194,6 +167,8 @@ int main( void ) {
         glUniformMatrix4fv(program.uniform_proj_matrix, 1, GL_FALSE, glm::value_ptr(projection));
         glUniformMatrix4fv(program.uniform_view_matrix, 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(program.uniform_model_matrix, 1, GL_FALSE, glm::value_ptr(model));
+        glUniform1i(program.uniform_shading_option, object.colorChoice);
+        glUniform3fv(program.uniform_color, 1, glm::value_ptr(object.color));
         //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, program.texture, 0);
 
         assert(glGetError() == GL_NO_ERROR);
@@ -241,20 +216,32 @@ int main( void ) {
 
 static void key_callback(GLFWwindow* window, int key, int scancode,
 int action, int mods) {
-            if (key == GLFW_KEY_A) angle -= 0.25f;
-            if (key == GLFW_KEY_D) angle += 0.25f;
-            if (key == GLFW_KEY_W) {
-                if (object.mouseZPos+1 <= FLUIDSIZE)
-                    object.mouseZPos++;
-            }
-            if (key == GLFW_KEY_S) {
-                if (object.mouseZPos-1 >=1)
-                    object.mouseZPos--;
-            }
-            if (key == GLFW_KEY_UP) zoom += 0.05;
-            if (key == GLFW_KEY_DOWN) zoom -= 0.05;
-            if (key == GLFW_KEY_Q) object.cursorXOffset--;
-            if (key == GLFW_KEY_E) object.cursorXOffset++;
+    if (key == GLFW_KEY_A) object.angle -= 2.5f;
+    if (key == GLFW_KEY_D) object.angle += 2.5f;
+    if (key == GLFW_KEY_W) {
+        if (object.mouseZPos+1 <= FLUIDSIZE)
+            object.mouseZPos++;
+        object.sourceYOffset++;
+    }
+    if (key == GLFW_KEY_S) {
+        if (object.mouseZPos-1 >=1)
+            object.mouseZPos--;
+        object.sourceYOffset--;
+    }
+    //if (key == GLFW_KEY_UP) zoom += 0.05;
+    //if (key == GLFW_KEY_DOWN) zoom -= 0.05;
+    if (key == GLFW_KEY_Q) object.sourceXOffset--;
+    if (key == GLFW_KEY_E) object.sourceXOffset++;
+    if (key == GLFW_KEY_EQUAL) object.zoom+=0.05;
+    if (key == GLFW_KEY_MINUS) object.zoom-0.05f>=0.0f ?
+        object.zoom-=0.05 : object.zoom-=0.0f;
+    if (key == GLFW_KEY_1) object.colorChoice = 1;
+    if (key == GLFW_KEY_2) object.colorChoice = 2;
+    if (key == GLFW_KEY_3) object.colorChoice = 3;
+    if (key == GLFW_KEY_O) object.permeability-0.05 >= 0 ?
+        object.permeability-=0.05 : object.permeability-=0.0f;
+    if (key == GLFW_KEY_P) object.permeability+=0.05;// >= 1 ?
+        //object.permeability+=0.05 : object.permeability-=0.0f;
 }
 
 static void error_callback(int error, const char* description) {
@@ -310,7 +297,6 @@ static void mouse_click_callback(GLFWwindow* w, int button, int action, int mods
     } else if ( action == GLFW_RELEASE ) {
         program.mouse_click = false;
         object.densityAmount += 100;
-        std::cout << "CLICKITY CLICK\n";
     }
 
     return;
@@ -333,7 +319,17 @@ void initUpdateObject() {
     object.mouseYPos0       = 0;
     object.mouseZPos        = 1;
     object.mouseZPos0       = 1;
-    object.cursorXOffset    = 0;
+    object.sourceXOffset    = 0;
+    object.sourceYOffset    = 0;
+    object.angle            = 0.f;
+    object.zoom             = 0.25f;
+    object.iterations       = 10;
+    object.diffusion        = 0.005;
+    object.viscosity        = 0.005;
+    object.permeability     = 1.0f;
+    object.dt               = 0.1f;
+    object.color            = glm::vec3(0.5333f, 0.6509f, 1.0f);
+    object.colorChoice      = 0;
 
     program.frameBuffer             = 0;
     program.attribute_vertex        = 0;
@@ -342,4 +338,7 @@ void initUpdateObject() {
     program.attribute_velocity_y    = 0;
     program.attribute_velocity_z    = 0;
     program.uniform_size            = 0;
+    program.uniform_color           = 0;
+    program.uniform_shading_option  = 0;
+    program.uniform_sampler         = 0;
 }

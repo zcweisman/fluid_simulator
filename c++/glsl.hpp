@@ -218,6 +218,14 @@ void GLSL::initShaderVars() {
         program.program[FRAMEBUFFER], "field_dimension"
     );
 
+    program.uniform_color = glGetUniformLocation(
+        program.program[FRAMEBUFFER], "color"
+    );
+
+    program.uniform_shading_option = glGetUniformLocation(
+        program.program[FRAMEBUFFER], "color_option"
+    );
+
     /*glUseProgram(program.program[BLUR]);
 
     program.attribute_tex_vertex = glGetAttribLocation(

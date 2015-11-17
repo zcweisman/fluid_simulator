@@ -47,10 +47,19 @@ typedef struct Program {
     GLint       uniform_view_matrix;
     GLint       uniform_proj_matrix;
     GLint       uniform_sampler;
+    GLint       uniform_color;
+    GLint       uniform_shading_option;
     bool        mouse_click;
 } GLProgram;
 
 typedef struct Object {
+    float   angle;
+    float   zoom;
+    float   dt;
+    char    iterations;
+    float   diffusion;
+    float   viscosity;
+
     int     densityXPos;
     int     densityYPos;
     int     densityZPos;
@@ -65,6 +74,7 @@ typedef struct Object {
     int     velocityXPos0;
     int     velocityYPos0;
     int     velocityZPos0;
+    float   permeability;
 
     int     mouseXPos;
     int     mouseXPos0;
@@ -73,7 +83,11 @@ typedef struct Object {
     int     mouseZPos;
     int     mouseZPos0;
 
-    int     cursorXOffset;
+    int     sourceXOffset;
+    int     sourceYOffset;
+
+    glm::vec3 color;
+    int     colorChoice;
 } UpdateObject;
 
 #endif

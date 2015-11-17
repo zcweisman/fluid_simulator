@@ -16,7 +16,7 @@
 
 class Fluid {
     float *vx, *vy, *vz, *vx0, *vy0, *vz0, *dens, *s;
-    float diffusion, viscosity, dt;
+    float diffusion, viscosity, dt, pf;
     unsigned int fieldDimension, fieldArraySize;
     char iterations;
 
@@ -40,6 +40,7 @@ public:
     void    setDiffuse(float);
     void    setTimeStep(float);
     void    setIterations(char);
+    void    setPermeability(float);
 
     void    addDensity(float, int, int, int);
     void    addVelocity(float, float, float, int, int, int);
@@ -53,6 +54,7 @@ public:
 Fluid::Fluid(short field, short window) {
     fieldDimension = field;
     fieldArraySize = pow(fieldDimension+2, 3);
+    pf = 1.0f;
 
     s           = (float*)calloc( fieldArraySize, sizeof(GLfloat) );
     vx          = (float*)calloc( fieldArraySize, sizeof(GLfloat) );
@@ -137,34 +139,12 @@ void Fluid::linSolve( int b, float* x, float* x0, float a, float c ) {
         for (int j = 1; j <= fieldDimension; j++) {
             for (int i = 1; i <= fieldDimension; i++) {
                 currentIndex = IX3D(i,j,k);
-                //if ( !program.locked_index_array[currentIndex] ) { // Makes sure the current block isnt an obstacle
-                    x[currentIndex] = (x0[currentIndex] +
-                     a*(x[IX3D(i+1, j, 1)] + x[IX3D(i-1, j, 1)] +
-                        x[IX3D(i, j+1, 1)] + x[IX3D(i, j-1, 1)])
-                    ) * cRecip;
-                /*} else {
-                    if ( !program.locked_index_array[IX2D(i+1,j)] ) {
-                        x[currentIndex] = (x0[currentIndex] +
-                         a*(x[IX2D(i-1, j)] +
-                            x[IX2D(i, j+1)] + x[IX2D(i, j-1)])
-                        ) * cRecip;
-                    } else if ( !program.locked_index_array[IX2D(i-1,j)] ) {
-                        x[currentIndex] = (x0[currentIndex] +
-                         a*(x[IX2D(i+1, j)] + x[IX2D(i, j+1)] + x[IX2D(i, j-1)])
-                        ) * cRecip;
-                    } else if ( !program.locked_index_array[IX2D(i,j+1)] ) {
-                        x[currentIndex] = (x0[currentIndex] +
-                         a*(x[IX2D(i+1, j)] + x[IX2D(i-1, j)] + x[IX2D(i, j-1)])
-                        ) * cRecip;
-                    } else if ( !program.locked_index_array[IX2D(i,j-1)] ) {
-                        x[currentIndex] = (x0[currentIndex] +
-                         a*(x[IX2D(i+1, j)] + x[IX2D(i-1, j)] + x[IX2D(i, j+1)]
-                     )) * cRecip;
-                 }
-             }*/
+                x[currentIndex] = (x0[currentIndex] +
+                 a*(x[IX3D(i+1, j, 1)] + x[IX3D(i-1, j, 1)] +
+                    x[IX3D(i, j+1, 1)] + x[IX3D(i, j-1, 1)])
+                ) * cRecip;
             }
         }
-
         setBnd(b, x);
     }
 }
@@ -440,22 +420,22 @@ void Fluid::setBnd3D(int b, float* x) {
 
     for(int k = 1; k <= n-2; k++) {
         for(int j = 1; j <= n-2; j++) {
-            x[IX3D(0, j, k)] = b == 1 ? -x[IX3D(1, j, k)] : x[IX3D(1, j, k)];
-            x[IX3D(n-1, j, k)] = b == 1 ? -x[IX3D(n-2, j, k)] : x[IX3D(n-2, j, k)];
+            x[IX3D(0, j, k)] = b == 1 ? pf*-x[IX3D(1, j, k)] : pf*x[IX3D(1, j, k)];
+            x[IX3D(n-1, j, k)] = b == 1 ? pf*-x[IX3D(n-2, j, k)] : pf*x[IX3D(n-2, j, k)];
         }
     }
 
     for(int k = 1; k <= n-2; k++) {
         for(int i = 1; i <= n-2; i++) {
-            x[IX3D(i, 0  , k)] = b == 2 ? -x[IX3D(i, 1  , k)] : x[IX3D(i, 1  , k)];
-            x[IX3D(i, n-1, k)] = b == 2 ? -x[IX3D(i, n-2, k)] : x[IX3D(i, n-2, k)];
+            x[IX3D(i, 0  , k)] = b == 2 ? pf*-x[IX3D(i, 1  , k)] : pf*x[IX3D(i, 1  , k)];
+            x[IX3D(i, n-1, k)] = b == 2 ? pf*-x[IX3D(i, n-2, k)] : pf*x[IX3D(i, n-2, k)];
         }
     }
 
     for(int j = 1; j <= n-2; j++) {
         for(int i = 1; i <= n-2; i++) {
-            x[IX3D(i, j, 0  )] = b == 3 ? -x[IX3D(i, j, 1  )] : x[IX3D(i, j, 1  )];
-            x[IX3D(i, j, n-1)] = b == 3 ? -x[IX3D(i, j, n-2)] : x[IX3D(i, j, n-2)];
+            x[IX3D(i, j, 0  )] = b == 3 ? pf*-x[IX3D(i, j, 1  )] : pf*x[IX3D(i, j, 1  )];
+            x[IX3D(i, j, n-1)] = b == 3 ? pf*-x[IX3D(i, j, n-2)] : pf*x[IX3D(i, j, n-2)];
         }
     }
     //fprintf(stderr, "Starting corner sets....");
@@ -507,6 +487,10 @@ void Fluid::setTimeStep( float t ) {
 
 void Fluid::setIterations( char i ) {
     iterations = i;
+}
+
+void Fluid::setPermeability(float p) {
+    pf = p;
 }
 
 void Fluid::addDensity(float amount, int x, int y, int z) {
