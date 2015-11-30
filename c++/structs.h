@@ -25,6 +25,8 @@ typedef struct Program {
     bool        locked_index_array[FLUIDSIZE*FLUIDSIZE*FLUIDSIZE];
 
     // Buffer objects
+    GLuint      quad_vertex_buffer;
+    GLuint      quad_vertex_array_id;
     GLuint      frameBuffer;
     GLuint      texture;
     GLuint      fvbo;

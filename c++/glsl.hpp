@@ -266,13 +266,11 @@ void GLSL::initArrays() {
     for (int k = 0; k < FLUIDSIZE; k++) {
         for (int j = 0; j < FLUIDSIZE; j++ ) {
             for (int i = 0; i < FLUIDSIZE; i++, count++ ) {
-                program.vertex_array[count*3] = (GLfloat)((i+1.f-0.5f)/FLUIDSIZE);
-                program.vertex_array[count*3+1] = (GLfloat)((j+1.f-0.5f)/FLUIDSIZE);
-                program.vertex_array[count*3+2] = (GLfloat)((k+1.f-0.5f)/FLUIDSIZE);
+                program.vertex_array[count*3] = (GLfloat)(((float)i/FLUIDSIZE)*2.f - 1.f);
+                program.vertex_array[count*3+1] = (GLfloat)(((float)j/FLUIDSIZE)*2.f - 1.f);
+                program.vertex_array[count*3+2] = (GLfloat)(((float)k/FLUIDSIZE)*2.f - 1.f);
                 program.index_array[count] = count; //Simply references the current
-                //if (j < FLUIDSIZE/2)
-                program.density_array[count] = 255.f;
-                //else program.density_array[count] = 0.f;
+                program.density_array[count] = 0.f;
                 program.velocity_x_array[count] = 0.f;
                 program.velocity_y_array[count] = 0.f;
                 program.velocity_z_array[count] = 0.f;
@@ -292,12 +290,12 @@ void GLSL::initVBO() {
     glBufferData( GL_ARRAY_BUFFER, sizeof( program.vertex_array ),
      program.vertex_array, GL_STATIC_DRAW );
 
-     // Initialize density array
-     glGenBuffers( 1, &(program.dbo) );
-     std::cout << "DBO Address: " << program.dbo << std::endl;
-     glBindBuffer( GL_ARRAY_BUFFER, program.dbo );
-     glBufferData( GL_ARRAY_BUFFER, sizeof( program.density_array ),
-        program.density_array, GL_STATIC_DRAW );
+    // Initialize density array
+    glGenBuffers( 1, &(program.dbo) );
+    std::cout << "DBO Address: " << program.dbo << std::endl;
+    glBindBuffer( GL_ARRAY_BUFFER, program.dbo );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( program.density_array ),
+     program.density_array, GL_STATIC_DRAW );
 
     glGenBuffers( 1, &(program.velxbo) );
     std::cout << "VELBO Address: " << program.velxbo << std::endl;
@@ -327,6 +325,15 @@ void GLSL::initVBO() {
     assert( glGetError() == GLEW_OK );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
     glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+
+    glUseProgram(program.program[BLUR]);
+    glGenVertexArrays(1, &program.quad_vertex_array_id);
+    glBindVertexArray(program.quad_vertex_array_id);
+
+    glGenBuffers(1, &program.quad_vertex_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, program.quad_vertex_buffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(program.quad_vertex_array),
+     program.quad_vertex_array, GL_STATIC_DRAW);
 }
 
 void GLSL::bufferData(Fluid* field) {

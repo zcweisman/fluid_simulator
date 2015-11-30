@@ -50,14 +50,14 @@ int main( void ) {
     fprintf(stderr, "Initializeing GLFW...");
     if ( !glfwInit() ) exit(EXIT_FAILURE);
 
-    glfwWindowHint(GLFW_SAMPLES, 4);
+    glfwWindowHint(GLFW_SAMPLES, 1);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    windowHeight    = 768;
-    windowWidth     = 768;
+    windowHeight    = 1024;
+    windowWidth     = 1024;
 
     window          = glfwCreateWindow(windowWidth, windowHeight,
                         "2D Navier-Stokes Simulator", NULL, NULL);
@@ -84,7 +84,6 @@ int main( void ) {
 
     glClearColor( 0.1, 0.45, 0.5, 1.0 );
 
-
     field = new Fluid(FLUIDSIZE, windowWidth);
 
     std::cout << "Installing shaders...";
@@ -93,7 +92,6 @@ int main( void ) {
     std::cout << "Completed\n";
 
     //Here
-    //program.quad_vertex_array[] =
     /*glGenFramebuffers(1, &program.frameBuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, program.frameBuffer);
     glGenTextures(1, &program.texture);
@@ -101,7 +99,11 @@ int main( void ) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowHeight, windowWidth, 0,
         GL_RGB, GL_UNSIGNED_BYTE, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);*/
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);*/
     //To here
 
     GLSL::initShaderVars();
@@ -170,7 +172,12 @@ int main( void ) {
         glUniform1i(program.uniform_shading_option, object.colorChoice);
         glUniform3fv(program.uniform_color, 1, glm::value_ptr(object.color));
         //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, program.texture, 0);
+        //GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+        //glDrawBuffers(1, DrawBuffers);
 
+
+
+        //glUseProgram(program.program[BLUR]);
         assert(glGetError() == GL_NO_ERROR);
         glDrawElements(GL_POINTS, FLUIDSIZE*FLUIDSIZE*FLUIDSIZE, GL_UNSIGNED_INT, 0);
         assert(glGetError() == GL_NO_ERROR);
@@ -249,9 +256,9 @@ static void error_callback(int error, const char* description) {
 }
 
 static void cursor_position_callback( GLFWwindow* w, double x, double y ) {
-    double realY = 768 - y;
-    object.mouseXPos = (int)((x/(768-1))*FLUIDSIZE - 0.5f);
-    object.mouseYPos = (int)((realY/(768-1))*FLUIDSIZE - 0.5f);
+    double realY = 1023 - y;
+    object.mouseXPos = (int)((x/(1024-1))*FLUIDSIZE - 0.5f);
+    object.mouseYPos = (int)((realY/(1024-1))*FLUIDSIZE - 0.5f);
 
     if ( program.mouse_click ) {
         double dx = object.mouseXPos - object.mouseXPos0;

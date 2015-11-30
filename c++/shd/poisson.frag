@@ -1,7 +1,9 @@
 uniform sampler2D frame;
 out vec4 fragcolor;
 
-vec2 poissonFilter[16] = vec2[](
+int numSamples = 16;
+
+vec2 poissonFilter[numSamples] = vec2[](
    vec2( -0.94201624, -0.39906216 ),
    vec2( 0.94558609, -0.76890725 ),
    vec2( -0.094184101, -0.92938870 ),
@@ -23,7 +25,7 @@ vec2 poissonFilter[16] = vec2[](
 void main() {
     float lightFactor = 1.0;
     float bias = 0.005;
-    for (int i = 0; i < 16; i++)
+    for (int i = 0; i < numSamples; i++)
         lightFactor -= 0.2*(1.0-texture(frame, vec3(gl_FragCoord.xy + poissonFilter[i]/700.0, (gl_FragCoord.z-bias)/gl_FragCoord.w)));
 
     fragcolor = lightFactor*texture(frame, gl_FragCoord.xy);

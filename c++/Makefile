@@ -9,7 +9,7 @@ ubuntu:
 	$(CC) $(CFLAGS) main.cpp $(LIB)
 
 fedora:
-	g++ main.cpp -lGL -lGLEW -lglfw -lpthread -std=c++11
+	nvcc main.cpp -lGL -lGLEW -lglfw -lpthread -std=c++11
 
 
 windows:
