@@ -51,6 +51,7 @@ typedef struct Program {
     GLint       uniform_sampler;
     GLint       uniform_color;
     GLint       uniform_shading_option;
+    GLint       uniform_pixel_size;
     bool        mouse_click;
 } GLProgram;
 
@@ -90,6 +91,7 @@ typedef struct Object {
 
     glm::vec3 color;
     int     colorChoice;
+    int     pixelSize;
 } UpdateObject;
 
 #endif

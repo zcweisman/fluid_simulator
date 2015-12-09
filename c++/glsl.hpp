@@ -226,6 +226,10 @@ void GLSL::initShaderVars() {
         program.program[FRAMEBUFFER], "color_option"
     );
 
+    program.uniform_pixel_size = glGetUniformLocation(
+        program.program[FRAMEBUFFER], "pixel_size"
+    );
+
     /*glUseProgram(program.program[BLUR]);
 
     program.attribute_tex_vertex = glGetAttribLocation(
@@ -313,7 +317,7 @@ void GLSL::initVBO() {
     std::cout << "VELBO Address: " << program.velzbo << std::endl;
     glBindBuffer( GL_ARRAY_BUFFER, program.velzbo );
     glBufferData( GL_ARRAY_BUFFER, sizeof( program.velocity_z_array ),
-        program.velocity_y_array, GL_STATIC_DRAW );
+        program.velocity_z_array, GL_STATIC_DRAW );
 
      // Initialize index array
     glGenBuffers( 1, &(program.ibo) );

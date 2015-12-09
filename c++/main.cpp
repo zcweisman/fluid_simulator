@@ -60,7 +60,7 @@ int main( void ) {
     windowWidth     = 1024;
 
     window          = glfwCreateWindow(windowWidth, windowHeight,
-                        "2D Navier-Stokes Simulator", NULL, NULL);
+                        "3D Navier-Stokes Simulator", NULL, NULL);
 
     if ( !window ) { glfwTerminate(); exit( EXIT_FAILURE ); }
 
@@ -170,6 +170,7 @@ int main( void ) {
         glUniformMatrix4fv(program.uniform_view_matrix, 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(program.uniform_model_matrix, 1, GL_FALSE, glm::value_ptr(model));
         glUniform1i(program.uniform_shading_option, object.colorChoice);
+        glUniform1i(program.uniform_pixel_size, object.pixelSize);
         glUniform3fv(program.uniform_color, 1, glm::value_ptr(object.color));
         //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, program.texture, 0);
         //GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
@@ -239,9 +240,13 @@ int action, int mods) {
     //if (key == GLFW_KEY_DOWN) zoom -= 0.05;
     if (key == GLFW_KEY_Q) object.sourceXOffset--;
     if (key == GLFW_KEY_E) object.sourceXOffset++;
-    if (key == GLFW_KEY_EQUAL) object.zoom+=0.05;
-    if (key == GLFW_KEY_MINUS) object.zoom-0.05f>=0.0f ?
+    if (key == GLFW_KEY_EQUAL) {object.zoom+=0.05; object.pixelSize++;}
+    if (key == GLFW_KEY_MINUS) {
+        object.zoom-0.05f>=0.0f ?
         object.zoom-=0.05 : object.zoom-=0.0f;
+        object.pixelSize-1>=0 ?
+        object.pixelSize-=1 : object.pixelSize-=0;
+    }
     if (key == GLFW_KEY_1) object.colorChoice = 1;
     if (key == GLFW_KEY_2) object.colorChoice = 2;
     if (key == GLFW_KEY_3) object.colorChoice = 3;
@@ -337,6 +342,7 @@ void initUpdateObject() {
     object.dt               = 0.1f;
     object.color            = glm::vec3(0.5333f, 0.6509f, 1.0f);
     object.colorChoice      = 0;
+    object.pixelSize        = 4;
 
     program.frameBuffer             = 0;
     program.attribute_vertex        = 0;
@@ -348,4 +354,5 @@ void initUpdateObject() {
     program.uniform_color           = 0;
     program.uniform_shading_option  = 0;
     program.uniform_sampler         = 0;
+    program.uniform_pixel_size      = 0;
 }

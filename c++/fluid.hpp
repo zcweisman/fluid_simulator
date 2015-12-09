@@ -344,56 +344,56 @@ void Fluid::project(float* u, float* v, float* p, float* div) {
 }
 
 void Fluid::project3D(float* u, float* v, float* w, float* p, float* div) {
-  int currentIndex, n = fieldDimension;
-  for (int k = 1; k <= n; k++) {
-    for (int j = 1; j <= n; j++) {
-      for (int i = 1; i <= n; i++) {
-        currentIndex = IX3D(i,j,k);
-        div[currentIndex] = -0.5f*(
-          u[IX3D(i+1, j, k)]
-          -u[IX3D(i-1, j, k)]
-          +v[IX3D(i, j+1, k)]
-          -v[IX3D(i, j-1, k)]
-          +w[IX3D(i, j, k+1)]
-          -w[IX3D(i, j, k-1)]
-        )/(n+2);
-        p[currentIndex] = 0;
-      }
+    int currentIndex, n = fieldDimension;
+    for (int k = 1; k <= n; k++) {
+        for (int j = 1; j <= n; j++) {
+            for (int i = 1; i <= n; i++) {
+                currentIndex = IX3D(i,j,k);
+                div[currentIndex] = -0.5f*(
+                    u[IX3D(i+1, j, k)]
+                    -u[IX3D(i-1, j, k)]
+                    +v[IX3D(i, j+1, k)]
+                    -v[IX3D(i, j-1, k)]
+                    +w[IX3D(i, j, k+1)]
+                    -w[IX3D(i, j, k-1)]
+                )/(n+2);
+                p[currentIndex] = 0;
+            }
+        }
     }
-  }
 
-  std::thread s1(&Fluid::setBnd3D, this, 0, div);
-  std::thread s2(&Fluid::setBnd3D, this, 0, p);
-  s1.join();
-  s2.join();
-  //setBnd3D(0, div);
-  //setBnd3D(0, p);
-  linSolve3D(0, p, div, 1, 6);
+    std::thread s1(&Fluid::setBnd3D, this, 0, div);
+    std::thread s2(&Fluid::setBnd3D, this, 0, p);
+    s1.join();
+    s2.join();
+    //setBnd3D(0, div);
+    //setBnd3D(0, p);
+    linSolve3D(0, p, div, 1, 6);
 
-  for (int k = 1; k <= n; k++) {
-    for (int j = 1; j <= n; j++) {
-      for (int i = 1; i <= n; i++) {
-        currentIndex = IX3D(i,j,k);
+    for (int k = 1; k <= n; k++) {
+        for (int j = 1; j <= n; j++) {
+            for (int i = 1; i <= n; i++) {
+                currentIndex = IX3D(i,j,k);
 
-        u[currentIndex] -= 0.5f * (  p[IX3D(i+1, j, k)]
-          -p[IX3D(i-1, j, k)]) * (n+2);
-        v[currentIndex] -= 0.5f * (  p[IX3D(i, j+1, k)]
-          -p[IX3D(i, j-1, k)]) * (n+2);
-        w[currentIndex] -= 0.5f * (  p[IX3D(i, j, k+1)]
-          -p[IX3D(i, j, k-1)]) * (n+2);
-      }
+                u[currentIndex] -= 0.5f * (  p[IX3D(i+1, j, k)]
+                -p[IX3D(i-1, j, k)]) * (n+2);
+                v[currentIndex] -= 0.5f * (  p[IX3D(i, j+1, k)]
+                -p[IX3D(i, j-1, k)]) * (n+2);
+                w[currentIndex] -= 0.5f * (  p[IX3D(i, j, k+1)]
+                -p[IX3D(i, j, k-1)]) * (n+2);
+            }
+        }
     }
-  }
 
-  std::thread s3(&Fluid::setBnd3D, this, 1, u);
-  std::thread s4(&Fluid::setBnd3D, this, 2, v);
-  std::thread s5(&Fluid::setBnd3D, this, 3, w);
-  s3.join();
-  s4.join();
-  s5.join();
-  //setBnd3D(1, u);
-  //setBnd3D(2, v);
-  //setBnd3D(3, w);
+    std::thread s3(&Fluid::setBnd3D, this, 1, u);
+    std::thread s4(&Fluid::setBnd3D, this, 2, v);
+    std::thread s5(&Fluid::setBnd3D, this, 3, w);
+    s3.join();
+    s4.join();
+    s5.join();
+    //setBnd3D(1, u);
+    //setBnd3D(2, v);
+    //setBnd3D(3, w);
 }
 
 void Fluid::setBnd(int b, float* x) {

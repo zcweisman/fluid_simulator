@@ -11,7 +11,7 @@ out vec4    fragcolor;
 void main () {
     vec3 x;
 
-    vec3 tmp = normalize(vVel);
+    vec3 tmp = normalize(abs(vVel));
     //vec3(vDens/25.0, (1-tmp.y-(vDens/255.0)), (tmp.y-(vDens/255.0)) );
     vec2 r = normalize(vec2(vDens, vVel.x));
     vec2 g = normalize(vec2(vDens, vVel.y));
