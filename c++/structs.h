@@ -92,6 +92,7 @@ typedef struct Object {
     glm::vec3 color;
     int     colorChoice;
     int     pixelSize;
+    bool    addDensity;
 } UpdateObject;
 
 #endif

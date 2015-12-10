@@ -1,7 +1,7 @@
 #version 330
 
 layout(points) in;
-layout(points, max_vertices = 6) out;
+layout(points, max_vertices = 14) out;
 
 in vec3 velocity[];
 in float density[];
@@ -23,7 +23,7 @@ void main() {
     vVel = velocity[0];
     vDens = density[0];
     gl_PointSize = pixel_size;
-    float offset = (1.0/(2.0 * field_dimension));
+    float offset = (1.0/(2.0 * field_dimension)) * 10.0;
 //------ old constant was 0.000001 ------
 //------ Current constant is 0.0000000001 ------
     tempPos = gl_in[0].gl_Position + vec4(offset, 0.0, 0.0, 1.0);
@@ -47,6 +47,41 @@ void main() {
     EmitVertex();
 
     tempPos = gl_in[0].gl_Position + vec4(0.0, 0.0, -offset, 1.0);
+    gl_Position = proj_matrix * view_matrix * model_matrix * tempPos;
+    EmitVertex();
+
+    //Split
+    offset /= 2.0;
+
+    tempPos = gl_in[0].gl_Position + vec4(offset, offset, offset, 1.0);
+    gl_Position = proj_matrix * view_matrix * model_matrix * tempPos;
+    EmitVertex();
+
+    tempPos = gl_in[0].gl_Position + vec4(offset, offset, -offset, 1.0);
+    gl_Position = proj_matrix * view_matrix * model_matrix * tempPos;
+    EmitVertex();
+
+    tempPos = gl_in[0].gl_Position + vec4(offset, -offset, offset, 1.0);
+    gl_Position = proj_matrix * view_matrix * model_matrix * tempPos;
+    EmitVertex();
+
+    tempPos = gl_in[0].gl_Position + vec4(offset, -offset, -offset, 1.0);
+    gl_Position = proj_matrix * view_matrix * model_matrix * tempPos;
+    EmitVertex();
+
+    tempPos = gl_in[0].gl_Position + vec4(-offset, offset, offset, 1.0);
+    gl_Position = proj_matrix * view_matrix * model_matrix * tempPos;
+    EmitVertex();
+
+    tempPos = gl_in[0].gl_Position + vec4(-offset, offset, -offset, 1.0);
+    gl_Position = proj_matrix * view_matrix * model_matrix * tempPos;
+    EmitVertex();
+
+    tempPos = gl_in[0].gl_Position + vec4(-offset, -offset, offset, 1.0);
+    gl_Position = proj_matrix * view_matrix * model_matrix * tempPos;
+    EmitVertex();
+
+    tempPos = gl_in[0].gl_Position + vec4(-offset, -offset, -offset, 1.0);
     gl_Position = proj_matrix * view_matrix * model_matrix * tempPos;
     EmitVertex();
 

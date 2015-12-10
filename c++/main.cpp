@@ -37,7 +37,7 @@ static void mouse_click_callback( GLFWwindow*, int, int, int );
 #include "glsl.hpp"
 #include "environment.hpp"
 
-int main( void ) {
+int main(void) {
     const GLubyte* renderer;
     const GLubyte* version;
     int windowHeight, windowWidth;
@@ -62,7 +62,7 @@ int main( void ) {
     window          = glfwCreateWindow(windowWidth, windowHeight,
                         "3D Navier-Stokes Simulator", NULL, NULL);
 
-    if ( !window ) { glfwTerminate(); exit( EXIT_FAILURE ); }
+    if ( !window ) { glfwTerminate(); exit(EXIT_FAILURE); }
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
@@ -343,6 +343,7 @@ void initUpdateObject() {
     object.color            = glm::vec3(0.5333f, 0.6509f, 1.0f);
     object.colorChoice      = 0;
     object.pixelSize        = 4;
+    object.addDensity       = false;
 
     program.frameBuffer             = 0;
     program.attribute_vertex        = 0;
