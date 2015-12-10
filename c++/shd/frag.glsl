@@ -20,8 +20,10 @@ void main () {
         x = color;
     if (color_option == 2)
         x = vec3(tmp.x, tmp.y, tmp.z);
+    if (color_option == 3)
+        x = vec3(1.0) - tmp;
 
     if (vDens/25.0 > 0.25) fragcolor = vec4(x, vDens/25.0);
     //fragcolor = vec4( x, vDens/255.0 );
     else discard;
-}
+}   

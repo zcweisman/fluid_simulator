@@ -56,8 +56,8 @@ int main(void) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    windowHeight    = 1024;
-    windowWidth     = 1024;
+    windowHeight    = 1280;
+    windowWidth     = 1280;
 
     window          = glfwCreateWindow(windowWidth, windowHeight,
                         "3D Navier-Stokes Simulator", NULL, NULL);
@@ -125,6 +125,23 @@ int main(void) {
     glm::mat4 translate;
     glm::mat4 rotate;
     glm::mat4 model;
+
+    std::cout << "\n------ Simulator Controls ------\n";
+    std::cout << "Press 'v' to add velocity to the system.\n";
+    std::cout << "Press 'o' to empty the cube when it gets too full.\n";
+    std::cout << "Press 'p' to stop emptyig the cube.\n";
+    std::cout << "Press 'l' to toggle mobile spheres density insertion.\n";
+    std::cout << "Use WSQE to move the spheres around.\n";
+
+    std::cout << "\n------ Viewing Controls ------\n";
+    std::cout << "Press '1' to view blue smoke shading.\n";
+    std::cout << "Press '2' to view velocity magnitude shading.\n";
+    std::cout << "Press '3' to view velocity magnitude negative shading.\n";
+    std::cout << "Press 'a' to rotate the cube left.\n";
+    std::cout << "Press 'd' to rotate the cube right.\n";
+    std::cout << "Press '+' to zoom in.\n";
+    std::cout << "Press '-' to zoom out.\n";
+
 
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -224,36 +241,40 @@ int main(void) {
 
 static void key_callback(GLFWwindow* window, int key, int scancode,
 int action, int mods) {
-    if (key == GLFW_KEY_A) object.angle -= 2.5f;
-    if (key == GLFW_KEY_D) object.angle += 2.5f;
-    if (key == GLFW_KEY_W) {
-        if (object.mouseZPos+1 <= FLUIDSIZE)
-            object.mouseZPos++;
-        object.sourceYOffset++;
+    if (action == GLFW_PRESS) {
+        if (key == GLFW_KEY_A) object.angle -= 0.25f;
+        if (key == GLFW_KEY_D) object.angle += 0.25f;
+        if (key == GLFW_KEY_W) {
+            if (object.mouseZPos+1 <= FLUIDSIZE)
+                object.mouseZPos++;
+            object.sourceYOffset++;
+        }
+        if (key == GLFW_KEY_S) {
+            if (object.mouseZPos-1 >=1)
+                object.mouseZPos--;
+            object.sourceYOffset--;
+        }
+        if (key == GLFW_KEY_Q) object.sourceXOffset--;
+        if (key == GLFW_KEY_E) object.sourceXOffset++;
+        if (key == GLFW_KEY_EQUAL) {
+            object.zoom+=0.05;
+            object.pixelSize++;
+        }
+        if (key == GLFW_KEY_MINUS) {
+            object.zoom-0.05f>=0.0f ?
+            object.zoom-=0.05 : object.zoom-=0.0f;
+            object.pixelSize-1>=0 ?
+            object.pixelSize-=1 : object.pixelSize-=0;
+        }
+        if (key == GLFW_KEY_1) object.colorChoice = 1;
+        if (key == GLFW_KEY_2) object.colorChoice = 2;
+        if (key == GLFW_KEY_3) object.colorChoice = 3;
+        if (key == GLFW_KEY_O) object.permeability-0.05 >= 0 ?
+            object.permeability-=0.05 : object.permeability-=0.0f;
+        if (key == GLFW_KEY_P) object.permeability+=0.05;// >= 1 ?
+        if (key == GLFW_KEY_V) object.addVelocity = !object.addVelocity;
+        if (key == GLFW_KEY_L) object.densityLocation = !object.densityLocation;
     }
-    if (key == GLFW_KEY_S) {
-        if (object.mouseZPos-1 >=1)
-            object.mouseZPos--;
-        object.sourceYOffset--;
-    }
-    //if (key == GLFW_KEY_UP) zoom += 0.05;
-    //if (key == GLFW_KEY_DOWN) zoom -= 0.05;
-    if (key == GLFW_KEY_Q) object.sourceXOffset--;
-    if (key == GLFW_KEY_E) object.sourceXOffset++;
-    if (key == GLFW_KEY_EQUAL) {object.zoom+=0.05; object.pixelSize++;}
-    if (key == GLFW_KEY_MINUS) {
-        object.zoom-0.05f>=0.0f ?
-        object.zoom-=0.05 : object.zoom-=0.0f;
-        object.pixelSize-1>=0 ?
-        object.pixelSize-=1 : object.pixelSize-=0;
-    }
-    if (key == GLFW_KEY_1) object.colorChoice = 1;
-    if (key == GLFW_KEY_2) object.colorChoice = 2;
-    if (key == GLFW_KEY_3) object.colorChoice = 3;
-    if (key == GLFW_KEY_O) object.permeability-0.05 >= 0 ?
-        object.permeability-=0.05 : object.permeability-=0.0f;
-    if (key == GLFW_KEY_P) object.permeability+=0.05;// >= 1 ?
-        //object.permeability+=0.05 : object.permeability-=0.0f;
 }
 
 static void error_callback(int error, const char* description) {
@@ -341,9 +362,10 @@ void initUpdateObject() {
     object.permeability     = 1.0f;
     object.dt               = 0.1f;
     object.color            = glm::vec3(0.5333f, 0.6509f, 1.0f);
-    object.colorChoice      = 0;
+    object.colorChoice      = 1;
     object.pixelSize        = 4;
-    object.addDensity       = false;
+    object.addVelocity      = false;
+    object.densityLocation  = false;
 
     program.frameBuffer             = 0;
     program.attribute_vertex        = 0;

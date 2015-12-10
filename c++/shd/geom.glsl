@@ -23,7 +23,7 @@ void main() {
     vVel = velocity[0];
     vDens = density[0];
     gl_PointSize = pixel_size;
-    float offset = (1.0/(2.0 * field_dimension)) * 10.0;
+    float offset = (1.0/(2.0 * field_dimension)) * 2.0;
 //------ old constant was 0.000001 ------
 //------ Current constant is 0.0000000001 ------
     tempPos = gl_in[0].gl_Position + vec4(offset, 0.0, 0.0, 1.0);

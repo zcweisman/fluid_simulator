@@ -29,44 +29,49 @@ void Environment::setParams(Fluid* field) {
     field->addDensity( object.densityAmount, object.densityXPos,
      object.densityYPos, object.densityZPos );
 
-     // Add density and velocity starting at FLUIDSIZE/2
-    field->addDensity(255, sourcePoint1+object.sourceXOffset,
-        sourcePoint1+object.sourceYOffset, sourcePoint1);
-    field->addDensity(255, sourcePoint1+object.sourceXOffset,
-        sourcePoint1+object.sourceYOffset, sourcePoint1+1);
-    field->addDensity(255, sourcePoint1+object.sourceXOffset,
-        sourcePoint1+1+object.sourceYOffset, sourcePoint1);
-    field->addDensity(255, sourcePoint1+object.sourceXOffset,
-        sourcePoint1+1+object.sourceYOffset, sourcePoint1+1);
+    if (object.densityLocation) {
+        // Add density and velocity starting at FLUIDSIZE/2
+        field->addDensity(255, sourcePoint1+object.sourceXOffset,
+            sourcePoint1+object.sourceYOffset, sourcePoint1);
+        field->addDensity(255, sourcePoint1+object.sourceXOffset,
+            sourcePoint1+object.sourceYOffset, sourcePoint1+1);
+        field->addDensity(255, sourcePoint1+object.sourceXOffset,
+            sourcePoint1+1+object.sourceYOffset, sourcePoint1);
+        field->addDensity(255, sourcePoint1+object.sourceXOffset,
+            sourcePoint1+1+object.sourceYOffset, sourcePoint1+1);
+    }
 
-    field->addVelocity(255, 0, 0, sourcePoint1-1+object.sourceXOffset,
-        sourcePoint1-1+object.sourceYOffset, sourcePoint1-1);
-    field->addVelocity(255, 0, 0, sourcePoint1-1+object.sourceXOffset,
-        sourcePoint1-1+object.sourceYOffset, sourcePoint1+2);
-    field->addVelocity(255, 0, 0, sourcePoint1-1+object.sourceXOffset,
-        sourcePoint1+2+object.sourceYOffset, sourcePoint1-1);
-    field->addVelocity(255, 0, 0, sourcePoint1-1+object.sourceXOffset,
-        sourcePoint1+2+object.sourceYOffset, sourcePoint1+2);
-
+    if (object.addVelocity) {
+        field->addVelocity(255, 0, 0, sourcePoint1-1+object.sourceXOffset,
+            sourcePoint1-1+object.sourceYOffset, sourcePoint1-1);
+        field->addVelocity(255, 0, 0, sourcePoint1-1+object.sourceXOffset,
+            sourcePoint1-1+object.sourceYOffset, sourcePoint1+2);
+        field->addVelocity(255, 0, 0, sourcePoint1-1+object.sourceXOffset,
+            sourcePoint1+2+object.sourceYOffset, sourcePoint1-1);
+        field->addVelocity(255, 0, 0, sourcePoint1-1+object.sourceXOffset,
+            sourcePoint1+2+object.sourceYOffset, sourcePoint1+2);
+    }
     // Opposing force
-    field->addDensity(255, sourcePoint1+object.sourceXOffset+15,
-        sourcePoint1+object.sourceYOffset, sourcePoint1);
-    field->addDensity(255, sourcePoint1+object.sourceXOffset+15,
-        sourcePoint1+object.sourceYOffset, sourcePoint1+1);
-    field->addDensity(255, sourcePoint1+object.sourceXOffset+15,
-        sourcePoint1+1+object.sourceYOffset, sourcePoint1);
-    field->addDensity(255, sourcePoint1+object.sourceXOffset+15,
-        sourcePoint1+1+object.sourceYOffset, sourcePoint1+1);
-
-    field->addVelocity(-255, 0, 0, sourcePoint1+object.sourceXOffset+16,
-        sourcePoint1-1+object.sourceYOffset, sourcePoint1-1);
-    field->addVelocity(-255, 0, 0, sourcePoint1+object.sourceXOffset+16,
-        sourcePoint1-1+object.sourceYOffset, sourcePoint1+2);
-    field->addVelocity(-255, 0, 0, sourcePoint1+object.sourceXOffset+16,
-        sourcePoint1+2+object.sourceYOffset, sourcePoint1-1);
-    field->addVelocity(-255, 0, 0, sourcePoint1+object.sourceXOffset+16,
-        sourcePoint1+2+object.sourceYOffset, sourcePoint1+2);
-
+    if (object.densityLocation) {
+        field->addDensity(255, sourcePoint1+object.sourceXOffset+15,
+            sourcePoint1+object.sourceYOffset, sourcePoint1);
+        field->addDensity(255, sourcePoint1+object.sourceXOffset+15,
+            sourcePoint1+object.sourceYOffset, sourcePoint1+1);
+        field->addDensity(255, sourcePoint1+object.sourceXOffset+15,
+            sourcePoint1+1+object.sourceYOffset, sourcePoint1);
+        field->addDensity(255, sourcePoint1+object.sourceXOffset+15,
+            sourcePoint1+1+object.sourceYOffset, sourcePoint1+1);
+    }
+    if (object.addVelocity) {
+        field->addVelocity(-255, 0, 0, sourcePoint1+object.sourceXOffset+16,
+            sourcePoint1-1+object.sourceYOffset, sourcePoint1-1);
+        field->addVelocity(-255, 0, 0, sourcePoint1+object.sourceXOffset+16,
+            sourcePoint1-1+object.sourceYOffset, sourcePoint1+2);
+        field->addVelocity(-255, 0, 0, sourcePoint1+object.sourceXOffset+16,
+            sourcePoint1+2+object.sourceYOffset, sourcePoint1-1);
+        field->addVelocity(-255, 0, 0, sourcePoint1+object.sourceXOffset+16,
+            sourcePoint1+2+object.sourceYOffset, sourcePoint1+2);
+    }
     // Add density and velocity at FLUIDSIZE/2 + 5
     /*field->addDensity(255, sourcePoint1+object.sourceXOffset+10,
         sourcePoint1+object.sourceYOffset-10, sourcePoint1);
@@ -85,6 +90,25 @@ void Environment::setParams(Fluid* field) {
         sourcePoint1+object.sourceYOffset-11, sourcePoint1+2);
     field->addVelocity(0, 255, 0, sourcePoint1-1+object.sourceXOffset+12,
         sourcePoint1+object.sourceYOffset-11, sourcePoint1+2);*/
+
+    //if (!object.densityLocation) {
+        field->addDensity(255, 5, 5, 5);
+        field->addDensity(255, 5, 55, 5);
+        field->addDensity(255, 55, 5, 5);
+        field->addDensity(255, 55, 55, 5);
+
+        field->addVelocity(255, 0, 0, 4, 5, 5);
+        field->addVelocity(0, 0, 255, 5, 5, 4);
+
+        field->addVelocity(0, 255, 0, 55, 4, 5);
+        field->addVelocity(0, 0, 255, 55, 5, 4);
+
+        field->addVelocity(-255, 0, 0, 56, 55, 5);
+        field->addVelocity(0, 0, 255, 55, 55, 4);
+
+        field->addVelocity(0, -255, 0, 5, 56, 5);
+        field->addVelocity(0, 0, 255, 5, 55, 4);
+    //}
 
     field->update();
 }
